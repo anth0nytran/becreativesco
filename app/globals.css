@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-gray-800;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-dark-bg text-white;
+    overflow-x: hidden;
+    -webkit-font-smoothing: subpixel-antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Responsive video and images */
+  video, img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Touch improvements */
+  @media (hover: none) and (pointer: coarse) {
+    /* Mobile touch optimizations */
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Better touch targets on mobile */
+    button, a {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+  
+  /* Prevent text selection on UI elements */
+  button, .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+  }
+  
+  /* Smooth animations */
+  @media (prefers-reduced-motion: no-preference) {
+    * {
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+  
+  /* Respect reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-primary via-accent-secondary to-accent-primary;
+  }
+  
+  .glow-text {
+    text-shadow: 0 0 10px rgba(74, 144, 226, 0.3),
+                 0 0 20px rgba(74, 144, 226, 0.2),
+                 0 0 30px rgba(74, 144, 226, 0.1);
+  }
+  
+  .shimmer-bg {
+    background: linear-gradient(
+      90deg,
+      rgba(74, 144, 226, 0.05) 0%,
+      rgba(123, 138, 139, 0.05) 50%,
+      rgba(74, 144, 226, 0.05) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4A90E2;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #357ABD;
+}
+
+/* 3D Transform Performance */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* GPU Acceleration for 3D transforms - Clean and optimized */
+[style*="translateZ"],
+[style*="translateY"],
+.motion-div {
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent text blur during transforms */
+video,
+img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transform: translateZ(0);
+}
+

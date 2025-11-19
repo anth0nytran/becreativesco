@@ -1,0 +1,44 @@
+"use client";
+
+import { memo } from 'react';
+import OptimizedVideo from './OptimizedVideo';
+
+interface LazyVideoProps {
+  src: string;
+  poster?: string;
+  className?: string;
+  autoPlay?: boolean;
+  loop?: boolean;
+  muted?: boolean;
+  playsInline?: boolean;
+}
+
+// Lazy-loaded video component for below-the-fold content
+const LazyVideo = memo(({
+  src,
+  poster,
+  className = '',
+  autoPlay = false,
+  loop = true,
+  muted = true,
+  playsInline = true,
+}: LazyVideoProps) => {
+  return (
+    <OptimizedVideo
+      src={src}
+      poster={poster}
+      className={className}
+      autoPlay={autoPlay}
+      loop={loop}
+      muted={muted}
+      playsInline={playsInline}
+      lazy={true}
+      priority={false}
+    />
+  );
+});
+
+LazyVideo.displayName = 'LazyVideo';
+
+export default LazyVideo;
+
