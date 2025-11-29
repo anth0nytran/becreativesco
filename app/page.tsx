@@ -453,7 +453,7 @@ const Home = memo(function Home() {
       {/* Image Auto Slider Section - Photos gallery */}
       <Section3DTransition depth={80}>
         <section className="relative py-0 bg-black">
-          <ImageAutoSlider images={galleryImages} imageSize="lg" speed={30} />
+          <ImageAutoSlider images={galleryImages} imageSize="lg" speed={55} />
         </section>
       </Section3DTransition>
 
