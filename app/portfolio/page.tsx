@@ -250,21 +250,27 @@ export default function Portfolio() {
             viewport={{ once: true }}
             className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 px-4"
           >
-            {categories.map((category) => (
-              <motion.button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-full font-medium transition-all duration-300 text-sm sm:text-base whitespace-nowrap ${
-                  selectedCategory === category
-                    ? 'bg-white text-black'
-                    : 'bg-dark-card/50 text-gray-400 hover:text-white border border-white/10 hover:border-white/30'
-                }`}
-              >
-                {category}
-              </motion.button>
-            ))}
+            {categories.map((category) => {
+              const isActive = selectedCategory === category;
+              return (
+                <motion.button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  className={`group relative inline-flex items-center rounded-full px-5 sm:px-7 py-2.5 sm:py-3 text-sm font-semibold tracking-wide transition-all duration-200 whitespace-nowrap border ${
+                    isActive
+                      ? 'border-transparent bg-white text-black shadow-[0_8px_25px_rgba(255,255,255,0.15)]'
+                      : 'border-white/10 bg-white/5 text-gray-300 hover:text-white hover:border-white/30 hover:bg-white/10'
+                  }`}
+                >
+                  <span className="relative z-10">{category}</span>
+                  {!isActive && (
+                    <span className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-r from-white/5 via-transparent to-white/5 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                  )}
+                </motion.button>
+              );
+            })}
           </motion.div>
         </div>
       </section>

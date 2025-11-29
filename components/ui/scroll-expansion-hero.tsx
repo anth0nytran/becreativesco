@@ -4,6 +4,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useCallback,
   ReactNode,
   TouchEvent,
   WheelEvent,
@@ -41,6 +42,38 @@ const ScrollExpandMedia = ({
   const [isActive, setIsActive] = useState<boolean>(false);
 
   const sectionRef = useRef<HTMLDivElement | null>(null);
+  const wasActiveRef = useRef<boolean>(false);
+  const hadUserInteractionRef = useRef<boolean>(false);
+
+  // Track user interaction to know if we need to simulate focus
+  useEffect(() => {
+    const markInteraction = () => {
+      hadUserInteractionRef.current = true;
+    };
+    
+    window.addEventListener('click', markInteraction, { once: true });
+    window.addEventListener('keydown', markInteraction, { once: true });
+    
+    return () => {
+      window.removeEventListener('click', markInteraction);
+      window.removeEventListener('keydown', markInteraction);
+    };
+  }, []);
+
+  // When hero becomes active after being inactive, ensure document can capture wheel events
+  useEffect(() => {
+    if (isActive && !wasActiveRef.current) {
+      // Hero just became active - ensure we can capture wheel events
+      // This helps when refreshing mid-page and scrolling back up
+      if (!hadUserInteractionRef.current && sectionRef.current) {
+        // Focus the document body to ensure wheel events are captured
+        document.body.focus();
+        // Also try to scroll to ensure the browser knows we're at the hero
+        window.scrollTo({ top: window.scrollY, behavior: 'instant' as ScrollBehavior });
+      }
+    }
+    wasActiveRef.current = isActive;
+  }, [isActive]);
 
   useEffect(() => {
     setScrollProgress(0);
@@ -52,121 +85,128 @@ const ScrollExpandMedia = ({
     const target = sectionRef.current;
     if (!target) return;
 
+    const evaluateInitialVisibility = () => {
+      const rect = target.getBoundingClientRect();
+      const height = Math.max(rect.height, 1);
+      const visible = Math.max(
+        0,
+        Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0),
+      );
+      const ratio = visible / height;
+      const active = ratio > 0.3;
+      setIsActive(active);
+      if (!active && !mediaFullyExpanded && rect.top < 0) {
+        setMediaFullyExpanded(true);
+        setShowContent(true);
+        setScrollProgress(1);
+      }
+    };
+
+    evaluateInitialVisibility();
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           const active = entry.isIntersecting && entry.intersectionRatio > 0.3;
           setIsActive(active);
           if (!entry.isIntersecting && !mediaFullyExpanded) {
-            // If user reloads somewhere mid-page, unlock the hero immediately
             setMediaFullyExpanded(true);
             setShowContent(true);
             setScrollProgress(1);
           }
         });
       },
-      { threshold: [0, 0.3, 0.6, 1], rootMargin: '-20% 0px -20% 0px' }
+      { threshold: [0, 0.3, 0.6, 1], rootMargin: '-20% 0px -20% 0px' },
     );
 
     observer.observe(target);
     return () => observer.disconnect();
   }, [mediaFullyExpanded]);
 
+  // Use refs to always have latest values in event handlers without re-attaching listeners
+  const stateRef = useRef({ scrollProgress, mediaFullyExpanded, touchStartY, isActive });
   useEffect(() => {
-    if (!isActive) return;
+    stateRef.current = { scrollProgress, mediaFullyExpanded, touchStartY, isActive };
+  }, [scrollProgress, mediaFullyExpanded, touchStartY, isActive]);
 
-    const handleWheel = (e: WheelEvent) => {
-      if (mediaFullyExpanded && e.deltaY < 0 && window.scrollY <= 5) {
-        setMediaFullyExpanded(false);
-        e.preventDefault();
-      } else if (!mediaFullyExpanded) {
-        e.preventDefault();
-        const scrollDelta = e.deltaY * 0.0009;
-        const newProgress = Math.min(
-          Math.max(scrollProgress + scrollDelta, 0),
-          1
-        );
-        setScrollProgress(newProgress);
+  // Stable event handlers that read from refs
+  const handleWheel = useCallback((e: globalThis.WheelEvent) => {
+    const { isActive: active, mediaFullyExpanded: expanded, scrollProgress: progress } = stateRef.current;
+    
+    if (!active) return;
 
-        if (newProgress >= 1) {
-          setMediaFullyExpanded(true);
-          setShowContent(true);
-        } else if (newProgress < 0.75) {
-          setShowContent(false);
-        }
+    if (expanded && e.deltaY < 0 && window.scrollY <= 5) {
+      setMediaFullyExpanded(false);
+      e.preventDefault();
+    } else if (!expanded) {
+      e.preventDefault();
+      const scrollDelta = e.deltaY * 0.0009;
+      const newProgress = Math.min(Math.max(progress + scrollDelta, 0), 1);
+      setScrollProgress(newProgress);
+
+      if (newProgress >= 1) {
+        setMediaFullyExpanded(true);
+        setShowContent(true);
+      } else if (newProgress < 0.75) {
+        setShowContent(false);
       }
-    };
+    }
+  }, []);
 
-    const handleTouchStart = (e: TouchEvent) => {
-      setTouchStartY(e.touches[0].clientY);
-    };
+  const handleTouchStart = useCallback((e: globalThis.TouchEvent) => {
+    if (!stateRef.current.isActive) return;
+    setTouchStartY(e.touches[0].clientY);
+  }, []);
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!touchStartY) return;
+  const handleTouchMove = useCallback((e: globalThis.TouchEvent) => {
+    const { isActive: active, mediaFullyExpanded: expanded, scrollProgress: progress, touchStartY: touchStart } = stateRef.current;
+    
+    if (!active || !touchStart) return;
 
-      const touchY = e.touches[0].clientY;
-      const deltaY = touchStartY - touchY;
+    const touchY = e.touches[0].clientY;
+    const deltaY = touchStart - touchY;
 
-      if (mediaFullyExpanded && deltaY < -20 && window.scrollY <= 5) {
-        setMediaFullyExpanded(false);
-        e.preventDefault();
-      } else if (!mediaFullyExpanded) {
-        e.preventDefault();
-        // Increase sensitivity for mobile, especially when scrolling back
-        const scrollFactor = deltaY < 0 ? 0.008 : 0.005; // Higher sensitivity for scrolling back
-        const scrollDelta = deltaY * scrollFactor;
-        const newProgress = Math.min(
-          Math.max(scrollProgress + scrollDelta, 0),
-          1
-        );
-        setScrollProgress(newProgress);
+    if (expanded && deltaY < -20 && window.scrollY <= 5) {
+      setMediaFullyExpanded(false);
+      e.preventDefault();
+    } else if (!expanded) {
+      e.preventDefault();
+      const scrollFactor = deltaY < 0 ? 0.008 : 0.005;
+      const scrollDelta = deltaY * scrollFactor;
+      const newProgress = Math.min(Math.max(progress + scrollDelta, 0), 1);
+      setScrollProgress(newProgress);
 
-        if (newProgress >= 1) {
-          setMediaFullyExpanded(true);
-          setShowContent(true);
-        } else if (newProgress < 0.75) {
-          setShowContent(false);
-        }
-
-        setTouchStartY(touchY);
+      if (newProgress >= 1) {
+        setMediaFullyExpanded(true);
+        setShowContent(true);
+      } else if (newProgress < 0.75) {
+        setShowContent(false);
       }
-    };
 
-    const handleTouchEnd = (): void => {
-      setTouchStartY(0);
-    };
+      setTouchStartY(touchY);
+    }
+  }, []);
 
-    window.addEventListener('wheel', handleWheel as unknown as EventListener, {
-      passive: false,
-    });
-    window.addEventListener(
-      'touchstart',
-      handleTouchStart as unknown as EventListener,
-      { passive: false }
-    );
-    window.addEventListener(
-      'touchmove',
-      handleTouchMove as unknown as EventListener,
-      { passive: false }
-    );
-    window.addEventListener('touchend', handleTouchEnd as EventListener);
+  const handleTouchEnd = useCallback(() => {
+    setTouchStartY(0);
+  }, []);
+
+  // Attach event listeners once and never remove them - they check isActive internally
+  useEffect(() => {
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
 
     return () => {
-      window.removeEventListener(
-        'wheel',
-        handleWheel as unknown as EventListener
-      );
-      window.removeEventListener(
-        'touchstart',
-        handleTouchStart as unknown as EventListener
-      );
-      window.removeEventListener(
-        'touchmove',
-        handleTouchMove as unknown as EventListener
-      );
-      window.removeEventListener('touchend', handleTouchEnd as EventListener);
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isActive, scrollProgress, mediaFullyExpanded, touchStartY]);
+  }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd]);
+
+  // Removed hard reset on scroll-to-top so the animation can reverse naturally
 
   useEffect(() => {
     const checkIfMobile = (): void => {

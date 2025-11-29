@@ -425,6 +425,7 @@ const Home = memo(function Home() {
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black pointer-events-none">
                   <LazyVideo
                     src={item.video}
+                  poster={item.image}
                     autoPlay
                     loop
                     muted
@@ -451,14 +452,14 @@ const Home = memo(function Home() {
 
       {/* Image Auto Slider Section - Photos gallery */}
       <Section3DTransition depth={80}>
-        <section className="relative py-0 bg-black border-t border-white/10">
+        <section className="relative py-0 bg-black">
           <ImageAutoSlider images={galleryImages} imageSize="lg" speed={30} />
         </section>
       </Section3DTransition>
 
       {/* Lead Capture Section */}
       <Section3DTransition depth={150}>
-        <section className="relative py-32 px-4 bg-black border-t border-white/10">
+        <section className="relative py-32 px-4 bg-black">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -484,41 +485,47 @@ const Home = memo(function Home() {
 
       {/* Story Section */}
       <Section3DTransition depth={100}>
-        <section className="relative py-32 px-4 bg-black border-t border-white/10">
+        <section className="relative py-32 px-4 bg-black">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center"
+            className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-12 md:gap-16 items-center"
           >
-            <div>
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-              >
-                <div className="inline-block mb-8 px-4 py-2 rounded-full bg-white/10 border border-white/20">
-                  <span className="text-sm font-medium text-white">Our Story</span>
-                </div>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-6 md:mb-8 text-white leading-tight">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="space-y-6"
+            >
+              <div className="inline-flex items-center gap-3 rounded-full bg-white/5 px-5 py-2 text-sm font-medium text-white/80 border border-white/10 shadow-[0_0_30px_rgba(255,255,255,0.12)]">
+                Our Story
+              </div>
+              <div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight tracking-tight">
                   Crafting Visual
-                  <br />
-                  <span className="text-accent-primary">Narratives</span>
                 </h2>
-                <p className="text-base sm:text-lg md:text-xl text-gray-400 leading-relaxed mb-4 md:mb-6">
-                  At BE CREATIVES CO., we believe every brand has a unique story waiting to be told. 
-                  Our team of creative professionals merges technical expertise with artistic vision 
-                  to create compelling visual narratives that resonate with audiences.
+                <p className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold bg-gradient-to-r from-white to-accent-primary bg-clip-text text-transparent">
+                  Narratives
                 </p>
-                <p className="text-base sm:text-lg md:text-xl text-gray-400 leading-relaxed">
-                  From concept to execution, we're committed to delivering excellence that elevates 
-                  your brand and leaves a lasting impression. Let's create something extraordinary together.
+              </div>
+              <div className="space-y-4 text-gray-300 text-lg md:text-xl leading-relaxed">
+                <p>
+                  At BE CREATIVES CO., we believe every brand has a unique story waiting
+                  to be told. Our team of creative professionals merges technical
+                  expertise with artistic vision to create compelling visual narratives
+                  that resonate with audiences.
                 </p>
-              </motion.div>
-            </div>
+                <p>
+                  From concept to execution, we're committed to delivering excellence
+                  that elevates your brand and leaves a lasting impression. Let's create
+                  something extraordinary together.
+                </p>
+              </div>
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, x: 50 }}
@@ -527,15 +534,30 @@ const Home = memo(function Home() {
               transition={{ duration: 0.8 }}
               className="relative"
             >
-              <div className="rounded-xl md:rounded-2xl bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-white/10 p-1">
-                <div className="w-full h-full rounded-xl md:rounded-2xl bg-black/80 backdrop-blur flex items-center justify-center px-6 sm:px-10 md:px-16 py-10">
-                  <div className="flex flex-col sm:flex-row w-full items-center justify-between gap-8 sm:gap-0">
-                    {heroStats.map((stat) => (
-                      <AnimatedStat key={stat.label} {...stat} />
-                    ))}
-                  </div>
+              <div className="rounded-[32px] border border-white/10 bg-gradient-to-br from-white/5 via-white/2 to-transparent p-[1px] shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+                <div className="rounded-[30px] bg-black/80 backdrop-blur-md px-8 py-10 flex flex-col sm:flex-row gap-6 md:gap-10">
+                  {heroStats.map((stat, idx) => (
+                    <div
+                      key={stat.label}
+                      className="flex flex-col gap-2 text-left sm:text-center min-w-[120px]"
+                    >
+                      <motion.span
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.12 }}
+                        className="text-4xl sm:text-5xl font-semibold text-white tracking-tight"
+                      >
+                        {stat.value}
+                        {stat.suffix}
+                      </motion.span>
+                      <span className="text-xs sm:text-sm uppercase tracking-[0.35em] text-gray-400">
+                        {stat.label}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
+              <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-accent-primary/20 blur-3xl" />
             </motion.div>
           </motion.div>
         </div>
