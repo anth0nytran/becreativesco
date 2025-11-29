@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import ShaderBackground from '@/components/ShaderBackground';
 import DepthLayers from '@/components/DepthLayers';
 import Section3DTransition from '@/components/Section3DTransition';
@@ -11,65 +11,66 @@ import LazyVideo from '@/components/LazyVideo';
 import OptimizedImage from '@/components/OptimizedImage';
 import ScrollExpandMedia from '@/components/ui/scroll-expansion-hero';
 import ImageAutoSlider from '@/components/ui/image-auto-slider';
-import { ArrowDown, Play } from 'lucide-react';
+import { getVideoUrl, getPhotoUrl } from '@/lib/media';
+import { ArrowDown, ArrowUpRight, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Suspense, memo } from 'react';
+import { Suspense, memo, useEffect, useRef, useState } from 'react';
 
 // Portfolio items with actual assets
 const portfolioItems = [
   {
     id: 1,
-    title: 'F1 Arcade Grand Opening',
-    category: 'Commercial',
-    description: 'Cinematic showcase reel for F1 Arcade grand opening event.',
-    video: '/assets/videos/F1Arcade_NowOpenReel_(1080x1920)_v3.mp4',
-    image: '/assets/photos/untitled-2.jpg',
+    title: 'F1 Arcade - Las Vegas',
+    category: 'Branding',
+    description: '',
+    video: getVideoUrl('F1Arcade_NowOpenReel_(1080x1920)_v3.mp4'),
+    image: getPhotoUrl('untitled-2.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
     id: 2,
-    title: 'Central Cee Recap',
-    category: 'Music Video',
-    description: 'High-energy recap video for Central Cee grand event.',
-    video: '/assets/videos/CentralCee_GrandRecap_1920x1080.mp4',
-    image: '/assets/photos/untitled-5.jpg',
+    title: 'The Grand Boston',
+    category: 'Hospitality & Events',
+    description: '',
+    video: getVideoUrl('R3hab_GRANDRecap.mp4'),
+    image: getPhotoUrl('untitled-5.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
     id: 3,
-    title: 'Mystique Food Shoot - Wagyu',
-    category: 'Commercial',
-    description: 'Premium food cinematography featuring Wagyu Toast.',
-    video: '/assets/videos/3.6.25_MystiqueFoodShoot_WagyuToast.mp4',
-    image: '/assets/photos/untitled-10.jpg',
+    title: 'The Mystique Boston',
+    category: 'Branding',
+    description: '',
+    video: getVideoUrl('3.6.25_MystiqueFoodShoot_WagyuToast.mp4'),
+    image: getPhotoUrl('untitled-10.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
     id: 4,
-    title: 'Matroda Boat Cruise',
-    category: 'Music Video',
-    description: 'Dynamic recap of Matroda boat cruise event.',
-    video: '/assets/videos/MATRODA_BOATCRUISERecap.mp4',
-    image: '/assets/photos/untitled-11.jpg',
+    title: 'Cardvault By Tom Brady',
+    category: 'Hospitality & Events',
+    description: '',
+    video: getVideoUrl('ToppsRIpNightRecap_(PaytonPritchard)_v2.mp4'),
+    image: getPhotoUrl('untitled-11.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
     id: 5,
-    title: 'Encore BH Red8 Sashimi',
+    title: 'Encore Boston Harbor - Red8',
     category: 'Commercial',
-    description: 'Elegant food photography showcasing premium sashimi platter.',
-    video: '/assets/videos/EncoreBH_Red8_SashimiPlatter.mp4',
-    image: '/assets/photos/untitled-12.jpg',
+    description: '',
+    video: getVideoUrl('EncoreBH_Red8_SashimiPlatter.mp4'),
+    image: getPhotoUrl('untitled-12.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
     id: 6,
-    title: 'A Boogie Grand Event',
+    title: 'The Grand Boston - Catdealers',
     category: 'Music Video',
-    description: 'Epic recap video for A Boogie With The Hoodie grand event.',
-    video: '/assets/videos/AboogieGrand_1920x1080copy.mp4',
-    image: '/assets/photos/untitled-13.jpg',
+    description: '',
+    video: getVideoUrl('12.20.24_CatDealers_GRAND(1920x1080).mp4'),
+    image: getPhotoUrl('untitled-13.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
@@ -77,51 +78,98 @@ const portfolioItems = [
     title: 'Charmalagne Memoire',
     category: 'Commercial',
     description: 'Artistic showcase of Charmalagne Memoire project.',
-    video: '/assets/videos/CharmalagneMemoire_1920x1080.mp4',
-    image: '/assets/photos/untitled-16.jpg',
+    video: getVideoUrl('CharmalagneMemoire_1920x1080.mp4'),
+    image: getPhotoUrl('untitled-16.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
     id: 8,
-    title: 'HV Pool Shoot',
-    category: 'Commercial',
-    description: 'Summer vibes captured in HV pool shoot event.',
-    video: '/assets/videos/HV_POOLSHOOT_HVPRE-ROLLSJULY4TH_1920X1080.mp4',
-    image: '/assets/photos/untitled-21.jpg',
+    title: 'Happy Vally',
+    category: 'Branding',
+    description: '',
+    video: getVideoUrl('HV_POOLSHOOT_HVPRE-ROLLSJULY4TH_1920X1080.mp4'),
+    image: getPhotoUrl('untitled-21.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
     id: 9,
-    title: 'Mystique Chicken Wings',
+    title: 'Big Night Life - Cheatcodes',
     category: 'Commercial',
-    description: 'Food cinematography featuring crispy chicken wings.',
-    video: '/assets/videos/3.6.25_MystiqueFoodShoot_ChickenWings.mp4',
-    image: '/assets/photos/untitled-26.jpg',
+    description: '',
+    video: getVideoUrl('11.30.24_CheatcodesRecap.mp4'),
+    image: getPhotoUrl('untitled-26.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
 ];
 
-// Local gallery images from public/assets/photos
+// Local gallery images (via helper so they can come from Supabase or /public)
 const galleryImages = [
-  '/assets/photos/untitled-2.jpg',
-  '/assets/photos/untitled-5.jpg',
-  '/assets/photos/untitled-8.jpg',
-  '/assets/photos/untitled-10.jpg',
-  '/assets/photos/untitled-11.jpg',
-  '/assets/photos/untitled-12.jpg',
-  '/assets/photos/untitled-13.jpg',
-  '/assets/photos/untitled-16.jpg',
-  '/assets/photos/untitled-21.jpg',
-  '/assets/photos/untitled-26.jpg',
-  '/assets/photos/untitled-30copy.jpg',
-  '/assets/photos/untitled-45.jpg',
-  '/assets/photos/untitled-47.jpg',
-  '/assets/photos/Screenshot.png',
-  '/assets/photos/Screenshot2.png',
+  'untitled-2.jpg',
+  'untitled-5.jpg',
+  'untitled-8.jpg',
+  'untitled-10.jpg',
+  'untitled-11.jpg',
+  'untitled-12.jpg',
+  'untitled-13.jpg',
+  'untitled-16.jpg',
+  'untitled-21.jpg',
+  'untitled-26.jpg',
+  'untitled-30copy.jpg',
+  'untitled-45.jpg',
+  'untitled-47.jpg',
+  'Screenshot.png',
+  'Screenshot2.png',
+].map(getPhotoUrl);
+
+const heroStats = [
+  { value: 150, suffix: '+', label: 'Projects' },
+  { value: 50, suffix: '+', label: 'Clients' },
+  { value: 10, suffix: '+', label: 'Years' },
 ];
 
-const Home = memo(function Home() {
+const AnimatedStat = ({ value, suffix, label }: { value: number; suffix?: string; label: string }) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const isInView = useInView(ref, { once: true, amount: 0.4 });
+  const [count, setCount] = useState(0);
 
+  useEffect(() => {
+    if (!isInView) return;
+    const duration = 1500;
+    const start = performance.now();
+    let frameId: number;
+
+    const updateCount = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      setCount(Math.round(progress * value));
+      if (progress < 1) {
+        frameId = requestAnimationFrame(updateCount);
+      }
+    };
+
+    frameId = requestAnimationFrame(updateCount);
+    return () => cancelAnimationFrame(frameId);
+  }, [isInView, value]);
+
+  return (
+    <div ref={ref} className="flex flex-col items-center text-center px-4 sm:px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="text-4xl sm:text-5xl md:text-6xl font-bold text-white"
+      >
+        {count}
+        {suffix}
+      </motion.div>
+      <span className="mt-2 text-xs sm:text-sm uppercase tracking-[0.3em] text-gray-400">
+        {label}
+      </span>
+    </div>
+  );
+};
+
+const Home = memo(function Home() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-black">
       <ShaderBackground />
@@ -130,117 +178,217 @@ const Home = memo(function Home() {
       {/* Scroll Expansion Hero Section */}
       <ScrollExpandMedia
         mediaType="video"
-        mediaSrc="/assets/videos/longerdemoreel.mp4"
-        bgImageSrc="/assets/photos/untitled-2.jpg"
-        title="Stories that stand out"
+        mediaSrc={getVideoUrl('longerdemoreel.mp4')}
+        bgImageSrc={getPhotoUrl('untitled-2.jpg')}
+        title=""
         date="Featured Work"
-        scrollToExpand="Scroll to expand"
         textBlend={false}
       >
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 text-white">
-            Crafting Visual Narratives
+            Building Brands Through Visual Storytelling
           </h2>
-          <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-8 leading-relaxed">
-            We don't just create content—we build full-scale brand ecosystems powered by strategy, storytelling, and consistency.
+          <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-6 leading-relaxed">
+            At BE CREATIVES CO., we transform raw ideas into high-impact visual content, brand assets, and campaigns that resonate with your audience and drive measurable results.
           </p>
           <p className="text-base sm:text-lg md:text-xl text-gray-300 leading-relaxed">
-            At BE CREATIVES CO., we transform ideas into compelling visual stories that resonate with audiences and elevate brands.
+            We create end-to-end brand ecosystems—from strategy and messaging to content production and social media visuals—so every touchpoint tells the same powerful story and moves customers closer to working with you.
           </p>
+          <div className="mt-10 flex justify-center">
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="group rounded-full border-white/40 bg-white/5 px-8 py-6 text-base sm:text-lg font-semibold text-white shadow-[0_0_35px_rgba(255,255,255,0.15)] transition hover:border-white hover:bg-white/15"
+            >
+              <Link href="/contact" className="flex items-center gap-3">
+                <span>Book your free creative strategy call now</span>
+                <ArrowUpRight className="w-5 h-5 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-1" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </ScrollExpandMedia>
 
       {/* Large Content Showcase - Two Column Video Blocks */}
       <Section3DTransition depth={300}>
         <section className="relative py-0 px-0 bg-black">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 min-h-[50vh] md:min-h-screen">
-          {/* Left Video Block */}
-          <motion.div
-            initial={{ opacity: 0, x: -100 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="relative group cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
-              <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
-                <OptimizedVideo
-                  src="/assets/videos/F1Arcade_NowOpenReel_(1080x1920)_v3.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  priority={false}
-                  lazy={true}
-                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                />
-              </Suspense>
-            </div>
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
-            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 }}
-              >
-                <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">Brand Films</h3>
-                <p className="text-sm sm:text-base md:text-lg text-gray-300 mb-4 md:mb-6">Cinematic storytelling that elevates your brand</p>
-                <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
-                  <span className="text-lg font-medium">View Project</span>
-                  <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
-                </Link>
-              </motion.div>
-            </div>
-            <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
-              <span className="text-xs md:text-sm text-gray-400">01</span>
-            </div>
-          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 min-h-[50vh] md:min-h-screen">
+            {/* Left Video Block */}
+            <motion.div
+              initial={{ opacity: 0, x: -100 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="relative group cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
+                <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
+                  <OptimizedVideo
+                    src={getVideoUrl('F1Arcade_NowOpenReel_(1080x1920)_v3.mp4')}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    priority={false}
+                    lazy={true}
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                  />
+                </Suspense>
+              </div>
+              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">Hospitality & Events</h3>
+                  {/* <p className="text-sm sm:text-base md:text-lg text-gray-300 mb-4 md:mb-6">Cinematic storytelling that elevates your brand</p> */}
+                  <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
+                    <span className="text-lg font-medium">View Project</span>
+                    <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
+                  </Link>
+                </motion.div>
+              </div>
+              <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
+                <span className="text-xs md:text-sm text-gray-400">01</span>
+              </div>
+            </motion.div>
 
-          {/* Right Video Block */}
-          <motion.div
-            initial={{ opacity: 0, x: 100 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="relative group cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
-              <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
-                <OptimizedVideo
-                  src="/assets/videos/CentralCee_GrandRecap_1920x1080.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  priority={false}
-                  lazy={true}
-                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                />
-              </Suspense>
-            </div>
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
-            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 }}
-              >
-                <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">Commercial Work</h3>
-                <p className="text-sm sm:text-base md:text-lg text-gray-300 mb-4 md:mb-6">High-impact campaigns that drive results</p>
-                <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
-                  <span className="text-lg font-medium">View Project</span>
-                  <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
-                </Link>
-              </motion.div>
-            </div>
-            <div className="absolute top-4 right-4 md:top-8 md:right-8 z-10">
-              <span className="text-xs md:text-sm text-gray-400">02</span>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+            {/* Right Video Block */}
+            <motion.div
+              initial={{ opacity: 0, x: 100 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="relative group cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
+                <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
+                  <OptimizedVideo
+                    src={getVideoUrl('CentralCee_GrandRecap_1920x1080.mp4')}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    priority={false}
+                    lazy={true}
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                  />
+                </Suspense>
+              </div>
+              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">Nightlife & Concerts</h3>
+                  {/* <p className="text-sm sm:text-base md:text-lg text-gray-300 mb-4 md:mb-6">High-impact campaigns that drive results</p> */}
+                  <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
+                    <span className="text-lg font-medium">View Project</span>
+                    <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
+                  </Link>
+                </motion.div>
+              </div>
+              <div className="absolute top-4 right-4 md:top-8 md:right-8 z-10">
+                <span className="text-xs md:text-sm text-gray-400">02</span>
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 min-h-[50vh] md:min-h-screen">
+            {/* Left Video Block */}
+            <motion.div
+              initial={{ opacity: 0, x: -100 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="relative group cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
+                <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
+                  <OptimizedVideo
+                    src={getVideoUrl('F1Arcade_NowOpenReel_(1080x1920)_v3.mp4')}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    priority={false}
+                    lazy={true}
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                  />
+                </Suspense>
+              </div>
+              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">Real Estate & Development</h3>
+                  {/* <p className="text-sm sm:text-base md:text-lg text-gray-300 mb-4 md:mb-6">Cinematic storytelling that elevates your brand</p> */}
+                  <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
+                    <span className="text-lg font-medium">View Project</span>
+                    <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
+                  </Link>
+                </motion.div>
+              </div>
+              <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
+                <span className="text-xs md:text-sm text-gray-400">01</span>
+              </div>
+            </motion.div>
+
+            {/* Right Video Block */}
+            <motion.div
+              initial={{ opacity: 0, x: 100 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="relative group cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
+                <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
+                  <OptimizedVideo
+                    src={getVideoUrl('CentralCee_GrandRecap_1920x1080.mp4')}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    priority={false}
+                    lazy={true}
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                  />
+                </Suspense>
+              </div>
+              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">Branding</h3>
+                  {/* <p className="text-sm sm:text-base md:text-lg text-gray-300 mb-4 md:mb-6">High-impact campaigns that drive results</p> */}
+                  <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
+                    <span className="text-lg font-medium">View Project</span>
+                    <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
+                  </Link>
+                </motion.div>
+              </div>
+              <div className="absolute top-4 right-4 md:top-8 md:right-8 z-10">
+                <span className="text-xs md:text-sm text-gray-400">02</span>
+              </div>
+            </motion.div>
+          </div>
+        </section>
       </Section3DTransition>
 
       {/* Large Video Grid Section */}
@@ -259,9 +407,9 @@ const Home = memo(function Home() {
               <br />
               <span className="text-accent-primary">Portfolio</span>
             </h2>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto px-4">
+            {/* <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto px-4">
               Explore our collection of creative projects
-            </p>
+            </p> */}
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -320,13 +468,13 @@ const Home = memo(function Home() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl font-bold mb-6 md:mb-8 text-white leading-tight px-4">
-              Ready to
+              Connect
               <br />
-              <span className="text-accent-primary">Elevate</span>
+              <span className="text-accent-primary">with us</span>
             </h2>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto px-4">
+            {/* <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto px-4">
               Let's discuss how we can bring your vision to life with creative storytelling
-            </p>
+            </p> */}
           </motion.div>
 
           <LeadCapture />
@@ -379,31 +527,12 @@ const Home = memo(function Home() {
               transition={{ duration: 0.8 }}
               className="relative"
             >
-              <div className="aspect-square rounded-xl md:rounded-2xl bg-gradient-to-br from-white/5 to-black border border-white/10 p-1">
-                <div className="w-full h-full rounded-xl md:rounded-2xl bg-black flex items-center justify-center">
-                  <div className="text-center p-6 sm:p-8 md:p-12">
-                    <div className="grid grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-12 mb-6 sm:mb-8 md:mb-12">
-                      {[
-                        { number: '150+', label: 'Projects' },
-                        { number: '50+', label: 'Clients' },
-                        { number: '15', label: 'Awards' },
-                        { number: '10+', label: 'Years' },
-                      ].map((stat, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          whileInView={{ opacity: 1, scale: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: i * 0.1 }}
-                          className="text-center"
-                        >
-                          <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-1 md:mb-2">
-                            {stat.number}
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-400 uppercase tracking-wider">{stat.label}</div>
-                        </motion.div>
-                      ))}
-                    </div>
+              <div className="rounded-xl md:rounded-2xl bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-white/10 p-1">
+                <div className="w-full h-full rounded-xl md:rounded-2xl bg-black/80 backdrop-blur flex items-center justify-center px-6 sm:px-10 md:px-16 py-10">
+                  <div className="flex flex-col sm:flex-row w-full items-center justify-between gap-8 sm:gap-0">
+                    {heroStats.map((stat) => (
+                      <AnimatedStat key={stat.label} {...stat} />
+                    ))}
                   </div>
                 </div>
               </div>

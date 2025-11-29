@@ -6,13 +6,21 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Mail, User, Phone, Send, CheckCircle2 } from 'lucide-react';
+import { Mail, User, Phone, Send, CheckCircle2, Globe, Briefcase } from 'lucide-react';
 
 const leadSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
-  phone: z.string().optional(),
-  message: z.string().min(10, 'Message must be at least 10 characters'),
+  phone: z
+    .string()
+    .min(7, 'Phone number is required'),
+  social: z
+    .string()
+    .min(3, 'Please share your social media or website'),
+  industry: z
+    .string()
+    .min(2, 'Please tell us your industry or line of business'),
+  message: z.string().min(10, 'Tell us a bit more about your project (10+ characters)'),
 });
 
 type LeadFormData = z.infer<typeof leadSchema>;
@@ -143,7 +151,7 @@ const LeadCapture = () => {
                 )}
               </div>
 
-              {/* Phone Field (Optional) */}
+              {/* Phone Field */}
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
                   <Phone className="w-5 h-5" />
@@ -151,16 +159,69 @@ const LeadCapture = () => {
                 <input
                   {...register('phone')}
                   type="tel"
-                  placeholder="Phone Number (Optional)"
+                  placeholder="Phone Number"
                   className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-dark-surface/50 border border-white/10 rounded-lg sm:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10 transition-all duration-300 text-sm sm:text-base"
                 />
+                {errors.phone && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2 text-sm text-red-400"
+                  >
+                    {errors.phone.message}
+                  </motion.p>
+                )}
+              </div>
+
+              {/* Social / Website Field */}
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <input
+                  {...register('social')}
+                  type="text"
+                  placeholder="Social media or website"
+                  className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-dark-surface/50 border border-white/10 rounded-lg sm:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10 transition-all duration-300 text-sm sm:text-base"
+                />
+                {errors.social && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2 text-sm text-red-400"
+                  >
+                    {errors.social.message}
+                  </motion.p>
+                )}
+              </div>
+
+              {/* Industry Field */}
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                  <Briefcase className="w-5 h-5" />
+                </div>
+                <input
+                  {...register('industry')}
+                  type="text"
+                  placeholder="Industry / line of business"
+                  className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-dark-surface/50 border border-white/10 rounded-lg sm:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10 transition-all duration-300 text-sm sm:text-base"
+                />
+                {errors.industry && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2 text-sm text-red-400"
+                  >
+                    {errors.industry.message}
+                  </motion.p>
+                )}
               </div>
 
               {/* Message Field */}
               <div className="relative">
                 <textarea
                   {...register('message')}
-                  placeholder="Tell us about your project..."
+                  placeholder="Tell me about your project..."
                   rows={5}
                   className="w-full px-4 py-3 sm:py-4 bg-dark-surface/50 border border-white/10 rounded-lg sm:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10 transition-all duration-300 resize-none text-sm sm:text-base"
                 />

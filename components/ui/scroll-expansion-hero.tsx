@@ -8,7 +8,7 @@ import {
   TouchEvent,
   WheelEvent,
 } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ScrollExpandMediaProps {
   mediaType?: 'video' | 'image';
@@ -214,16 +214,18 @@ const ScrollExpandMedia = ({
 
           <div className='container mx-auto flex flex-col items-center justify-start relative z-10'>
             <div className='flex flex-col items-center justify-center w-full h-[100dvh] relative'>
-              <div
-                className='absolute z-0 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-none rounded-2xl overflow-hidden'
-                style={{
-                  width: `${mediaWidth}px`,
-                  height: `${mediaHeight}px`,
-                  maxWidth: '95vw',
-                  maxHeight: '85vh',
-                  boxShadow: '0px 0px 50px rgba(0, 0, 0, 0.5)',
-                }}
-              >
+              {/* Centered media + scroll indicator stack */}
+              <div className='relative flex flex-col items-center'>
+                <div
+                  className='transition-none rounded-2xl overflow-hidden'
+                  style={{
+                    width: `${mediaWidth}px`,
+                    height: `${mediaHeight}px`,
+                    maxWidth: '95vw',
+                    maxHeight: '85vh',
+                    boxShadow: '0px 0px 50px rgba(0, 0, 0, 0.5)',
+                  }}
+                >
                 {mediaType === 'video' ? (
                   mediaSrc.includes('youtube.com') ? (
                     <div className='relative w-full h-full pointer-events-none'>
@@ -311,16 +313,37 @@ const ScrollExpandMedia = ({
                       {date}
                     </p>
                   )}
-                  {scrollToExpand && (
-                    <p
-                      className='text-accent-primary font-medium text-center text-xs sm:text-sm md:text-base'
-                      style={{ transform: `translateX(${textTranslateX}vw)` }}
-                    >
-                      {scrollToExpand}
-                    </p>
-                  )}
                 </div>
               </div>
+              </div>
+
+              {/* Scroll Indicator - directly under media */}
+              <AnimatePresence>
+                {scrollProgress < 0.1 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    className='mt-6 flex flex-col items-center'
+                  >
+                    <motion.div
+                      animate={{ y: [0, 6, 0] }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                      }}
+                      className='flex flex-col items-center'
+                    >
+                      <span className='text-xs font-medium text-white/80 mb-3 tracking-[0.2em] uppercase drop-shadow-lg'>
+                        Scroll to explore
+                      </span>
+                      {/* <div className='w-[1px] h-8 bg-gradient-to-b from-white/60 to-transparent' /> */}
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div
                 className={`flex items-center justify-center text-center gap-4 w-full relative z-10 transition-none flex-col ${

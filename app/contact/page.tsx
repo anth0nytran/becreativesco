@@ -1,30 +1,51 @@
 "use client";
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import ShaderBackground from '@/components/ShaderBackground';
 import LeadCapture from '@/components/LeadCapture';
+import { BackgroundBeams } from '@/components/ui/background-beams';
 import { Mail, Phone, MapPin, Linkedin, Instagram, Twitter } from 'lucide-react';
 
 const contactInfo = [
   {
     icon: <Mail className="w-6 h-6" />,
     label: 'Email',
-    value: 'hello@becreatives.co',
-    href: 'mailto:hello@becreatives.co',
+    value: 'brian@becreativesco.com',
+    href: 'mailto:brian@becreativesco.com',
   },
   {
     icon: <Phone className="w-6 h-6" />,
     label: 'Phone',
-    value: '+1 (555) 123-4567',
-    href: 'tel:+15551234567',
+    value: '+1 (617) 708-5088',
+    href: 'tel:+16177085088',
   },
   {
     icon: <MapPin className="w-6 h-6" />,
     label: 'Location',
-    value: 'New York, NY',
+    value: 'Boston, MA',
     href: '#',
   },
 ];
+
+type HeroSegment = {
+  text: string;
+  accent?: boolean;
+};
+
+const heroLines: HeroSegment[][] = [
+  [
+    { text: "Let’s Build ", accent: false },
+    { text: "Content", accent: true },
+  ],
+  [
+    { text: "That Actually ", accent: false },
+    { text: "Converts", accent: true },
+  ],
+];
+
+const heroLineLengths = heroLines.map((line) =>
+  line.reduce((total, segment) => total + segment.text.length, 0),
+);
 
 const socialLinks = [
   { icon: <Instagram className="w-5 h-5" />, href: '#', label: 'Instagram' },
@@ -33,9 +54,98 @@ const socialLinks = [
 ];
 
 export default function Contact() {
+  const [lineProgress, setLineProgress] = useState(() => heroLineLengths.map(() => 0));
+  const [activeCaretLine, setActiveCaretLine] = useState(0);
+  const [caretVisible, setCaretVisible] = useState(true);
+  const [shouldShowCaret, setShouldShowCaret] = useState(true);
+
+  useEffect(() => {
+    const typingSpeed = 90;
+    const lineDelay = 450;
+    let timeout: ReturnType<typeof setTimeout>;
+    let cancelled = false;
+
+    const typeLine = (lineIndex: number, charIndex: number) => {
+      if (cancelled) return;
+
+      if (lineIndex >= heroLines.length) {
+        setShouldShowCaret(false);
+        setActiveCaretLine(heroLines.length - 1);
+        return;
+      }
+
+      setActiveCaretLine(lineIndex);
+      const targetLength = heroLineLengths[lineIndex];
+
+      if (charIndex <= targetLength) {
+        setLineProgress((prev) => {
+          const next = [...prev];
+          next[lineIndex] = charIndex;
+          return next;
+        });
+
+        timeout = setTimeout(() => typeLine(lineIndex, charIndex + 1), typingSpeed);
+      } else {
+        timeout = setTimeout(() => typeLine(lineIndex + 1, 1), lineDelay);
+      }
+    };
+
+    typeLine(0, 1);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!shouldShowCaret) {
+      setCaretVisible(false);
+      return;
+    }
+
+    const blink = setInterval(() => {
+      setCaretVisible((prev) => !prev);
+    }, 550);
+
+    return () => clearInterval(blink);
+  }, [shouldShowCaret]);
+
+  const heroAnnouncement = heroLines
+    .map((line) => line.map((segment) => segment.text).join(''))
+    .join(' ');
+
+  const renderLine = (segments: HeroSegment[], visibleChars: number) => {
+    let remaining = visibleChars;
+
+    return segments.map((segment, index) => {
+      if (remaining <= 0) {
+        return (
+          <span key={`${segment.text}-${index}`} aria-hidden="true">
+            {' '}
+          </span>
+        );
+      }
+
+      const visibleCount = Math.min(segment.text.length, remaining);
+      remaining -= visibleCount;
+
+      const text = segment.text.slice(0, visibleCount);
+      const accentClass = segment.accent
+        ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#4A90E2] via-[#18CCFC] to-[#7CF9FF] drop-shadow-[0_0_18px_rgba(76,196,255,0.32)]'
+        : '';
+
+      return (
+        <span key={`${segment.text}-${index}`} className={accentClass} aria-hidden="true">
+          {text}
+        </span>
+      );
+    });
+  };
+
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <ShaderBackground />
+    <div className="relative min-h-screen overflow-hidden bg-neutral-950">
+      <BackgroundBeams className="fixed inset-0 z-0" />
 
       {/* Hero Section */}
       <section className="relative min-h-[40vh] flex items-center justify-center px-4 pt-32">
@@ -54,14 +164,25 @@ export default function Contact() {
               <span className="text-sm font-medium text-white">Get In Touch</span>
             </motion.div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 text-white px-4">
-              Let's Create
-              <br />
-              <span className="text-accent-primary">Together</span>
+            <h1
+              className="px-4 text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl"
+              aria-label={heroAnnouncement}
+            >
+              {heroLines.map((line, idx) => (
+                <span key={idx} className="block leading-[1.05]">
+                  {renderLine(line, lineProgress[idx])}
+                  {shouldShowCaret && caretVisible && activeCaretLine === idx && (
+                    <span
+                      aria-hidden="true"
+                      className="ml-2 inline-block h-[1em] w-[2px] align-middle rounded-full bg-gradient-to-b from-white/80 to-white/20"
+                    />
+                  )}
+                </span>
+              ))}
             </h1>
 
-            <p className="text-base sm:text-lg md:text-xl text-gray-400 max-w-2xl mx-auto px-4">
-              Have a project in mind? Let's discuss how we can bring your vision to life.
+            <p className="text-base sm:text-lg md:text-xl text-gray-400 max-w-3xl mx-auto px-4">
+              Whether you need launch videos, ongoing social content, or full campaign coverage, our team creates strategic visuals built to attract, engage, and convert your ideal clients.
             </p>
           </motion.div>
         </div>
@@ -137,4 +258,3 @@ export default function Contact() {
     </div>
   );
 }
-

@@ -69,11 +69,10 @@ const ShaderBackground = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 -z-10 opacity-30"
+      className="fixed inset-0 z-[-20] opacity-30"
       style={{ mixBlendMode: 'screen' }}
     />
   );
 };
 
 export default ShaderBackground;
-
