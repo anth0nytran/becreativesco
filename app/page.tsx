@@ -425,11 +425,13 @@ const Home = memo(function Home() {
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black pointer-events-none">
                   <LazyVideo
                     src={item.video}
-                  poster={item.image}
+                    poster={item.image}
                     autoPlay
                     loop
                     muted
                     playsInline
+                    priority={index < 3}
+                    lazy={index >= 3}
                     className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500 ease-out"
                   />
                 </div>
@@ -469,9 +471,8 @@ const Home = memo(function Home() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl font-bold mb-6 md:mb-8 text-white leading-tight px-4">
-              Connect
-              <br />
-              <span className="text-accent-primary">with us</span>
+              Connect 
+              <span className="text-accent-primary"> with us</span>
             </h2>
             {/* <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto px-4">
               Let's discuss how we can bring your vision to life with creative storytelling

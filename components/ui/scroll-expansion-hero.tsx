@@ -63,12 +63,10 @@ const ScrollExpandMedia = ({
   // When hero becomes active after being inactive, ensure document can capture wheel events
   useEffect(() => {
     if (isActive && !wasActiveRef.current) {
-      // Hero just became active - ensure we can capture wheel events
-      // This helps when refreshing mid-page and scrolling back up
       if (!hadUserInteractionRef.current && sectionRef.current) {
-        // Focus the document body to ensure wheel events are captured
+        const fakeClick = () => document.body.click();
+        fakeClick();
         document.body.focus();
-        // Also try to scroll to ensure the browser knows we're at the hero
         window.scrollTo({ top: window.scrollY, behavior: 'instant' as ScrollBehavior });
       }
     }

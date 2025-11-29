@@ -11,6 +11,8 @@ interface LazyVideoProps {
   loop?: boolean;
   muted?: boolean;
   playsInline?: boolean;
+  priority?: boolean;
+  lazy?: boolean;
 }
 
 // Lazy-loaded video component for below-the-fold content
@@ -22,6 +24,8 @@ const LazyVideo = memo(({
   loop = true,
   muted = true,
   playsInline = true,
+  priority = false,
+  lazy = true,
 }: LazyVideoProps) => {
   return (
     <OptimizedVideo
@@ -32,8 +36,8 @@ const LazyVideo = memo(({
       loop={loop}
       muted={muted}
       playsInline={playsInline}
-      lazy={true}
-      priority={false}
+      lazy={lazy}
+      priority={priority}
     />
   );
 });
