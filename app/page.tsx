@@ -185,29 +185,40 @@ const AnimatedStat = ({ value, suffix, label }: { value: number; suffix?: string
 };
 
 const Home = memo(function Home() {
+  // Track if component has mounted (for hydration safety)
+  const [hasMounted, setHasMounted] = useState(false);
+  
   // Fetch media from R2
-  const { data: heroData } = useHeroMedia();
-  const { data: galleryData } = useGalleryMedia();
-  const { data: gridData } = useGridMedia();
-  const { data: portfolioData } = usePortfolioMedia();
+  const { data: heroData, loading: heroLoading } = useHeroMedia();
+  const { data: galleryData, loading: galleryLoading } = useGalleryMedia();
+  const { data: gridData, loading: gridLoading } = useGridMedia();
+  const { data: portfolioData, loading: portfolioLoading } = usePortfolioMedia();
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  // Always use fallbacks on server and during initial client render
+  // Only switch to R2 data after mount to avoid hydration mismatch
+  const useR2Data = hasMounted && !heroLoading && !galleryLoading && !gridLoading && !portfolioLoading;
 
   // Resolve hero media (R2 or fallback)
-  const heroVideoSrc = heroData?.item?.url || FALLBACK_HERO_VIDEO;
-  const heroPosterSrc = heroData?.items?.find((i) => i.type === 'image')?.url || FALLBACK_HERO_POSTER;
+  const heroVideoSrc = (useR2Data && heroData?.item?.url) || FALLBACK_HERO_VIDEO;
+  const heroPosterSrc = (useR2Data && heroData?.items?.find((i) => i.type === 'image')?.url) || FALLBACK_HERO_POSTER;
 
   // Resolve gallery images (R2 or fallback)
-  const galleryImages = galleryData?.items?.length
+  const galleryImages = (useR2Data && galleryData?.items?.length)
     ? galleryData.items.map((item) => item.url)
     : fallbackGalleryImages;
 
   // Resolve grid videos (R2 or fallback)
-  const gridVideos = gridData?.items?.length
+  const gridVideos = (useR2Data && gridData?.items?.length)
     ? gridData.items.map((item) => item.url)
     : fallbackGridVideos;
 
   // Build portfolio items with R2 URLs or fallback
   const portfolioItems = portfolioMetadata.map((meta, idx) => {
-    const r2Video = portfolioData?.items?.[idx];
+    const r2Video = useR2Data ? portfolioData?.items?.[idx] : null;
     const fallback = fallbackPortfolioMedia[idx];
     return {
       ...meta,

@@ -200,14 +200,22 @@ PortfolioItem.displayName = 'PortfolioItem';
 export default function Portfolio() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const deferredCategory = useDeferredValue(selectedCategory);
+  const [hasMounted, setHasMounted] = useState(false);
 
   // Fetch media from R2
-  const { data: projectsData } = useProjectsMedia();
+  const { data: projectsData, loading: projectsLoading } = useProjectsMedia();
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  // Only use R2 data after mount to avoid hydration mismatch
+  const useR2Data = hasMounted && !projectsLoading;
 
   // Build portfolio items with R2 URLs or fallback
   const portfolioItems: PortfolioItemData[] = useMemo(() => {
     return portfolioMetadata.map((meta, idx) => {
-      const r2Video = projectsData?.items?.[idx];
+      const r2Video = useR2Data ? projectsData?.items?.[idx] : null;
       const fallback = fallbackProjectsMedia[idx];
       return {
         ...meta,
@@ -215,7 +223,7 @@ export default function Portfolio() {
         image: fallback?.image || '', // Poster images from fallback for now
       };
     });
-  }, [projectsData]);
+  }, [projectsData, useR2Data]);
 
   const filteredItems = useMemo(() => {
     if (deferredCategory === 'All') return portfolioItems;
