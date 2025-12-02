@@ -11,16 +11,19 @@ import LazyVideo from '@/components/LazyVideo';
 import OptimizedImage from '@/components/OptimizedImage';
 import ScrollExpandMedia from '@/components/ui/scroll-expansion-hero';
 import ImageAutoSlider from '@/components/ui/image-auto-slider';
-import { ArrowDown, ArrowUpRight, Play } from 'lucide-react';
+import { ArrowDown, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Suspense, memo, useEffect, useRef, useState, ReactNode } from 'react';
+import { Suspense, memo, useEffect, useRef, useState, ReactNode, useCallback } from 'react';
 import { useHeroMedia, useGalleryMedia, useGridMedia, usePortfolioMedia } from '@/hooks/useMedia';
 import StreamPlayer from '@/components/StreamPlayer';
+import VideoPlayerModal from '@/components/VideoPlayerModal';
 
 // Fallback local paths (used when R2 is not configured or fails)
 const FALLBACK_HERO_VIDEO = '/assets/videos/longerdemoreel.mp4';
-const FALLBACK_HERO_POSTER = '/assets/photos/untitled-2.jpg';
+const HERO_POSTER_URL = process.env.NEXT_PUBLIC_R2_ASSET_BASE_URL
+  ? `${process.env.NEXT_PUBLIC_R2_ASSET_BASE_URL}/photos/photos/untitled-2.jpg`
+  : '/assets/photos/untitled-2.jpg';
 
 // Portfolio metadata (titles, categories, icons) - URLs will come from R2
 type PortfolioMetadataItem = {
@@ -109,10 +112,10 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
 
 // Grid section metadata
 const gridMetadata = [
-  { id: 1, title: 'Hospitality & Events', number: '01', position: 'left' },
-  { id: 2, title: 'Nightlife & Concerts', number: '02', position: 'right' },
-  { id: 3, title: 'Real Estate & Development', number: '03', position: 'left' },
-  { id: 4, title: 'Branding', number: '04', position: 'right' },
+  { id: 1, title: 'Hospitality & Events', number: '01', position: 'left', category: 'Hospitality & Events' },
+  { id: 2, title: 'Nightlife & Concerts', number: '02', position: 'right', category: 'Nightlife & Concerts' },
+  { id: 3, title: 'Real Estate & Development', number: '03', position: 'left', category: 'Real Estate & Development' },
+  { id: 4, title: 'Branding', number: '04', position: 'right', category: 'Branding' },
 ];
 
 // Fallback local gallery images
@@ -211,9 +214,18 @@ const AnimatedStat = ({ value, suffix, label }: { value: number; suffix?: string
   );
 };
 
+// Type for selected video in modal
+type SelectedVideoItem = {
+  title: string;
+  category: string;
+  streamId?: string;
+  video: string;
+};
+
 const Home = memo(function Home() {
   // Track if component has mounted (for hydration safety)
   const [hasMounted, setHasMounted] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<SelectedVideoItem | null>(null);
   
   // Fetch media from R2
   const { data: heroData, loading: heroLoading } = useHeroMedia();
@@ -225,16 +237,22 @@ const Home = memo(function Home() {
     setHasMounted(true);
   }, []);
 
+  const handleSelectVideo = useCallback((item: SelectedVideoItem) => {
+    setSelectedVideo(item);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedVideo(null);
+  }, []);
+
   // Always use fallbacks on server and during initial client render
   // Only switch to R2 data after mount to avoid hydration mismatch
   const useR2Data = hasMounted && !heroLoading && !galleryLoading && !gridLoading && !portfolioLoading;
 
   // Resolve hero media (R2 or fallback)
-  const heroFallbackVideo =
+const heroFallbackVideo =
     (useR2Data && heroData?.item?.url) || FALLBACK_HERO_VIDEO;
-  const heroPosterSrc =
-    (useR2Data && heroData?.items?.find((i) => i.type === 'image')?.url) ||
-    FALLBACK_HERO_POSTER;
+  const heroPosterSrc = HERO_POSTER_URL;
 
   // Resolve gallery images (R2 or fallback)
   const galleryImages = (useR2Data && galleryData?.items?.length)
@@ -273,7 +291,7 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
         textBlend={false}
       >
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 text-white">
+          <h2 className="heading-font text-xl sm:text-2xl md:text-3xl font-bold mb-6 text-white tracking-[0.08em]">
             Building Brands Through Visual Storytelling
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-6 leading-relaxed">
@@ -286,12 +304,11 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
             <Button
               asChild
               variant="outline"
-              size="lg"
-              className="group rounded-full border-white/40 bg-white/5 px-8 py-6 text-base sm:text-lg font-semibold text-white shadow-[0_0_35px_rgba(255,255,255,0.15)] transition hover:border-white hover:bg-white/15"
+              size="default"
+              className="rounded-full border-white/40 bg-white/5 px-6 py-3 text-sm sm:text-base font-semibold text-white shadow-[0_0_25px_rgba(255,255,255,0.12)] transition hover:border-white hover:bg-white/15"
             >
-              <Link href="/contact" className="flex items-center gap-3">
-                <span>Book your free creative strategy call now</span>
-                <ArrowUpRight className="w-5 h-5 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-1" />
+              <Link href="/contact" className="flex items-center justify-center px-4 text-center">
+                Book your free creative strategy call now
               </Link>
             </Button>
           </div>
@@ -303,214 +320,234 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
         <section className="relative py-0 px-0 bg-black">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0 min-h-[50vh] md:min-h-screen">
             {/* Left Video Block */}
-            <motion.div
-              initial={{ opacity: 0, x: -100 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="relative group cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
+            <Link
+              href={{ pathname: '/portfolio', query: { category: gridMetadata[0].category } }}
+              className="block group"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
-                <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
-                  {GRID_STREAM_IDS[0] ? (
-                    <StreamPlayer
-                      uid={GRID_STREAM_IDS[0]}
-                      autoPlay
-                      loop
-                      muted
-                      className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                    />
-                  ) : (
-                    <OptimizedVideo
-                      src={gridVideos[0] || fallbackGridVideos[0]}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      priority={false}
-                      lazy
-                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                    />
-                  )}
-                </Suspense>
-              </div>
-              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">{gridMetadata[0].title}</h3>
-                  <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
-                    <span className="text-lg font-medium">View Project</span>
-                    <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
-                  </Link>
-                </motion.div>
-              </div>
-              <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
-                <span className="text-xs md:text-sm text-gray-400">{gridMetadata[0].number}</span>
-              </div>
-            </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: -100 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="relative cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
+                  <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
+                    {GRID_STREAM_IDS[0] ? (
+                      <StreamPlayer
+                        uid={GRID_STREAM_IDS[0]}
+                        autoPlay
+                        loop
+                        muted
+                        className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                      />
+                    ) : (
+                      <OptimizedVideo
+                        src={gridVideos[0] || fallbackGridVideos[0]}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        priority={false}
+                        lazy
+                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                      />
+                    )}
+                  </Suspense>
+                </div>
+                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 md:mb-4">{gridMetadata[0].title}</h3>
+                    <span className="inline-flex items-center gap-2 text-white transition-colors group-hover:text-[#18CCFC]">
+                      <span className="text-lg font-medium">View Project</span>
+                      <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
+                    </span>
+                  </motion.div>
+                </div>
+                <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
+                  <span className="text-xs md:text-sm text-gray-400">{gridMetadata[0].number}</span>
+                </div>
+              </motion.div>
+            </Link>
 
             {/* Right Video Block */}
-            <motion.div
-              initial={{ opacity: 0, x: 100 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="relative group cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
+            <Link
+              href={{ pathname: '/portfolio', query: { category: gridMetadata[1].category } }}
+              className="block group"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
-                <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
-                  {GRID_STREAM_IDS[1] ? (
-                    <StreamPlayer
-                      uid={GRID_STREAM_IDS[1]}
-                      autoPlay
-                      loop
-                      muted
-                      className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                    />
-                  ) : (
-                    <OptimizedVideo
-                      src={gridVideos[1] || fallbackGridVideos[1]}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      priority={false}
-                      lazy
-                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                    />
-                  )}
-                </Suspense>
-              </div>
-              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">{gridMetadata[1].title}</h3>
-                  <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
-                    <span className="text-lg font-medium">View Project</span>
-                    <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
-                  </Link>
-                </motion.div>
-              </div>
-              <div className="absolute top-4 right-4 md:top-8 md:right-8 z-10">
-                <span className="text-xs md:text-sm text-gray-400">{gridMetadata[1].number}</span>
-              </div>
-            </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 100 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="relative cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
+                  <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
+                    {GRID_STREAM_IDS[1] ? (
+                      <StreamPlayer
+                        uid={GRID_STREAM_IDS[1]}
+                        autoPlay
+                        loop
+                        muted
+                        className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                      />
+                    ) : (
+                      <OptimizedVideo
+                        src={gridVideos[1] || fallbackGridVideos[1]}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        priority={false}
+                        lazy
+                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                      />
+                    )}
+                  </Suspense>
+                </div>
+                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 md:mb-4">{gridMetadata[1].title}</h3>
+                    <span className="inline-flex items-center gap-2 text-white transition-colors group-hover:text-[#18CCFC]">
+                      <span className="text-lg font-medium">View Project</span>
+                      <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
+                    </span>
+                  </motion.div>
+                </div>
+                <div className="absolute top-4 right-4 md:top-8 md:right-8 z-10">
+                  <span className="text-xs md:text-sm text-gray-400">{gridMetadata[1].number}</span>
+                </div>
+              </motion.div>
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0 min-h-[50vh] md:min-h-screen">
             {/* Left Video Block */}
-            <motion.div
-              initial={{ opacity: 0, x: -100 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="relative group cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
+            <Link
+              href={{ pathname: '/portfolio', query: { category: gridMetadata[2].category } }}
+              className="block group"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
-                <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
-                  {GRID_STREAM_IDS[2] ? (
-                    <StreamPlayer
-                      uid={GRID_STREAM_IDS[2]}
-                      autoPlay
-                      loop
-                      muted
-                      className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                    />
-                  ) : (
-                    <OptimizedVideo
-                      src={gridVideos[2] || fallbackGridVideos[2]}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      priority={false}
-                      lazy
-                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                    />
-                  )}
-                </Suspense>
-              </div>
-              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">{gridMetadata[2].title}</h3>
-                  <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
-                    <span className="text-lg font-medium">View Project</span>
-                    <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
-                  </Link>
-                </motion.div>
-              </div>
-              <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
-                <span className="text-xs md:text-sm text-gray-400">{gridMetadata[2].number}</span>
-              </div>
-            </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: -100 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="relative cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
+                  <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
+                    {GRID_STREAM_IDS[2] ? (
+                      <StreamPlayer
+                        uid={GRID_STREAM_IDS[2]}
+                        autoPlay
+                        loop
+                        muted
+                        className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                      />
+                    ) : (
+                      <OptimizedVideo
+                        src={gridVideos[2] || fallbackGridVideos[2]}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        priority={false}
+                        lazy
+                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                      />
+                    )}
+                  </Suspense>
+                </div>
+                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 md:mb-4">{gridMetadata[2].title}</h3>
+                    <span className="inline-flex items-center gap-2 text-white transition-colors group-hover:text-[#18CCFC]">
+                      <span className="text-lg font-medium">View Project</span>
+                      <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
+                    </span>
+                  </motion.div>
+                </div>
+                <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
+                  <span className="text-xs md:text-sm text-gray-400">{gridMetadata[2].number}</span>
+                </div>
+              </motion.div>
+            </Link>
 
             {/* Right Video Block */}
-            <motion.div
-              initial={{ opacity: 0, x: 100 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="relative group cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
+            <Link
+              href={{ pathname: '/portfolio', query: { category: gridMetadata[3].category } }}
+              className="block group"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
-                <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
-                  {GRID_STREAM_IDS[3] ? (
-                    <StreamPlayer
-                      uid={GRID_STREAM_IDS[3]}
-                      autoPlay
-                      loop
-                      muted
-                      className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                    />
-                  ) : (
-                    <OptimizedVideo
-                      src={gridVideos[3] || fallbackGridVideos[3]}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      priority={false}
-                      lazy
-                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                    />
-                  )}
-                </Suspense>
-              </div>
-              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">{gridMetadata[3].title}</h3>
-                  <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
-                    <span className="text-lg font-medium">View Project</span>
-                    <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
-                  </Link>
-                </motion.div>
-              </div>
-              <div className="absolute top-4 right-4 md:top-8 md:right-8 z-10">
-                <span className="text-xs md:text-sm text-gray-400">{gridMetadata[3].number}</span>
-              </div>
-            </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 100 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="relative cursor-pointer overflow-hidden min-h-[50vh] md:min-h-screen"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
+                  <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
+                    {GRID_STREAM_IDS[3] ? (
+                      <StreamPlayer
+                        uid={GRID_STREAM_IDS[3]}
+                        autoPlay
+                        loop
+                        muted
+                        className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                      />
+                    ) : (
+                      <OptimizedVideo
+                        src={gridVideos[3] || fallbackGridVideos[3]}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        priority={false}
+                        lazy
+                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                      />
+                    )}
+                  </Suspense>
+                </div>
+                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-[2]">
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 md:mb-4">{gridMetadata[3].title}</h3>
+                    <span className="inline-flex items-center gap-2 text-white transition-colors group-hover:text-[#18CCFC]">
+                      <span className="text-lg font-medium">View Project</span>
+                      <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
+                    </span>
+                  </motion.div>
+                </div>
+                <div className="absolute top-4 right-4 md:top-8 md:right-8 z-10">
+                  <span className="text-xs md:text-sm text-gray-400">{gridMetadata[3].number}</span>
+                </div>
+              </motion.div>
+            </Link>
           </div>
         </section>
       </Section3DTransition>
@@ -526,10 +563,10 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
             transition={{ duration: 0.8 }}
             className="mb-20"
           >
-            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl font-bold mb-6 md:mb-8 text-white leading-tight px-4">
+            <h2 className="heading-font text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold mb-6 md:mb-8 text-white leading-tight px-4 tracking-[0.08em]">
               Our
               <br />
-              <span className="text-accent-primary">Portfolio</span>
+              <span className="accent-gradient">Portfolio</span>
             </h2>
           </motion.div>
 
@@ -541,6 +578,7 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
+                onClick={() => handleSelectVideo(item)}
                 className="relative aspect-[4/5] rounded-xl overflow-hidden border border-white/10 group cursor-pointer pointer-events-auto will-change-transform will-change-opacity"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black pointer-events-none">
@@ -600,9 +638,9 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl font-bold mb-6 md:mb-8 text-white leading-tight px-4">
+            <h2 className="heading-font text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold mb-6 md:mb-8 text-white leading-tight px-4 tracking-[0.08em]">
               Connect
-              <span className="text-accent-primary"> with us</span>
+              <span className="accent-gradient"> with us</span>
             </h2>
           </motion.div>
 
@@ -629,14 +667,14 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
                 transition={{ duration: 0.8 }}
               className="space-y-6"
               >
-              <div className="inline-flex items-center gap-3 rounded-full bg-white/5 px-5 py-2 text-sm font-medium text-white/80 border border-white/10 shadow-[0_0_30px_rgba(255,255,255,0.12)]">
-                Our Story
+              <div className="inline-flex items-center gap-3 rounded-full bg-white/5 px-5 py-2 text-xs sm:text-sm font-medium text-white/80 border border-white/10 shadow-[0_0_30px_rgba(255,255,255,0.12)] subtitle-font tracking-[0.35em]">
+                OUR STORY
                 </div>
               <div>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight tracking-tight">
+                <h2 className="heading-font text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white leading-tight tracking-tight">
                   Crafting Visual
                 </h2>
-                <p className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold bg-gradient-to-r from-white to-accent-primary bg-clip-text text-transparent">
+                <p className="heading-font text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-white to-accent-primary bg-clip-text text-transparent">
                   Narratives
                 </p>
               </div>
@@ -691,6 +729,16 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
         </div>
       </section>
       </Section3DTransition>
+
+      {/* Video Player Modal */}
+      <VideoPlayerModal
+        isOpen={!!selectedVideo}
+        onClose={handleCloseModal}
+        streamId={selectedVideo?.streamId}
+        videoSrc={selectedVideo?.video}
+        title={selectedVideo?.title || ''}
+        category={selectedVideo?.category || ''}
+      />
     </div>
   );
 });

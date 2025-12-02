@@ -134,14 +134,14 @@ const VideoPlayer = ({ src, poster, className = '', autoplay = false, loop = fal
           {/* Control Buttons */}
           <button
             onClick={toggleMute}
-            className="text-white hover:text-accent-primary transition-colors"
+            className="text-white transition-colors hover:text-accent-primary"
           >
             {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
           </button>
 
           <button
             onClick={handleFullscreen}
-            className="text-white hover:text-accent-primary transition-colors"
+            className="text-white transition-colors hover:text-accent-primary"
           >
             <Maximize className="w-5 h-5" />
           </button>

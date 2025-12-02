@@ -105,11 +105,11 @@ const Navigation = () => {
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 md:h-20">
+          <div className="flex items-center justify-between h-16 md:h-20 gap-6">
             {/* Logo */}
             <motion.div
               variants={itemVariants}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 flex-shrink-0"
             >
               <Link href="/" className="flex items-center space-x-2">
                 <div className="relative">
@@ -120,54 +120,52 @@ const Navigation = () => {
                     </span>
                   </div>
                 </div>
-                <span className="text-xl font-bold text-white">
+                <span className="heading-font text-sm sm:text-base font-bold text-white tracking-[0.2em]">
                   BE CREATIVES CO.
                 </span>
               </Link>
             </motion.div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-6">
+            <motion.div
+              variants={itemVariants}
+              className="hidden md:flex flex-1 items-center justify-center space-x-6"
+            >
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
-                  <motion.div key={item.label} variants={itemVariants}>
-                    <Link
-                      href={item.href}
-                      className="relative group"
-                    >
-                      <div
-                      className={`px-0 py-2 flex items-center space-x-2 transition-all duration-300 ${
-                        isActive
-                          ? 'text-white'
-                          : 'text-gray-500 hover:text-white'
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="relative group px-2"
+                  >
+                    <span
+                      className={`heading-font text-xs sm:text-sm font-medium tracking-[0.25em] transition-colors duration-300 ${
+                        isActive ? 'text-white' : 'text-gray-500 group-hover:text-white'
                       }`}
-                      >
-                        <span className="text-sm sm:text-base font-medium uppercase tracking-wider">{item.label}</span>
-                      </div>
-
-                      {/* Active indicator */}
-                      {isActive && (
-                        <motion.div
-                          layoutId="activeSection"
-                          className="absolute bottom-0 left-0 right-0 h-[2px] bg-white -z-10"
-                          transition={{
-                            type: 'spring',
-                            stiffness: 380,
-                            damping: 30,
-                          }}
-                        />
-                      )}
-                    </Link>
-                  </motion.div>
+                    >
+                      {item.label}
+                    </span>
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeSection"
+                        className="absolute -bottom-2 left-0 right-0 h-[2px] bg-white"
+                        transition={{
+                          type: 'spring',
+                          stiffness: 380,
+                          damping: 30,
+                        }}
+                      />
+                    )}
+                  </Link>
                 );
               })}
-            </div>
+            </motion.div>
 
             {/* CTA Button */}
             <motion.div
               variants={itemVariants}
-              className="hidden md:block"
+              className="hidden md:flex justify-end flex-shrink-0"
             >
               <Link href="/contact">
                 <Button
@@ -265,7 +263,9 @@ const Navigation = () => {
                           <span className="transition-transform duration-300 group-hover:scale-110">
                             {item.icon}
                           </span>
-                          <span className="text-base font-medium">{item.label}</span>
+                          <span className="heading-font text-xs font-medium tracking-[0.25em]">
+                            {item.label}
+                          </span>
 
                           {/* Active glow effect */}
                           {isActive && (

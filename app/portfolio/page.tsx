@@ -1,17 +1,14 @@
 "use client";
 
 import { motion, useInView } from 'framer-motion';
-import dynamic from 'next/dynamic';
 import OptimizedVideo from '@/components/OptimizedVideo';
 import StreamPlayer from '@/components/StreamPlayer';
+import VideoPlayerModal from '@/components/VideoPlayerModal';
+import { BackgroundBeams } from '@/components/ui/background-beams';
 import { Play, ExternalLink, Film, Camera, Sparkles } from 'lucide-react';
-import { memo, useDeferredValue, useMemo, useState, useEffect, useRef, ReactNode } from 'react';
+import { memo, useDeferredValue, useMemo, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useProjectsMedia, MediaItem } from '@/hooks/useMedia';
-
-const LazyShaderBackground = dynamic(() => import('@/components/ShaderBackground'), {
-  ssr: false,
-  loading: () => <div className="fixed inset-0 -z-10 bg-black" aria-hidden="true" />,
-});
 
 type PortfolioCategory =
   | 'Hospitality & Events'
@@ -136,9 +133,9 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   },
   {
     id: 14,
-    title: 'Grand Boston Night Pulse',
+    title: 'Grand Boston - Night Pulse',
     category: 'Nightlife & Concerts',
-    description: 'Placeholder title. Please update.',
+    description: '',
     icon: <Camera className="w-5 h-5" />,
     streamId: '4e284ec992e64d442cb8b22158fa7ecf',
   },
@@ -152,9 +149,9 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   },
   {
     id: 16,
-    title: 'Happy Vally Brand Loop',
+    title: 'Happy Vally',
     category: 'Branding',
-    description: 'Placeholder title. Please update.',
+    description: '',
     icon: <Camera className="w-5 h-5" />,
     streamId: '63eef3c7ae27733273f1f4834b017ad6',
   },
@@ -184,7 +181,13 @@ interface PortfolioItemData extends PortfolioMetadataItem {
   video: string;
 }
 
-const PortfolioItem = memo(({ item, index }: { item: PortfolioItemData; index: number }) => {
+interface PortfolioItemProps {
+  item: PortfolioItemData;
+  index: number;
+  onSelect: (item: PortfolioItemData) => void;
+}
+
+const PortfolioItem = memo(({ item, index, onSelect }: PortfolioItemProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const inView = useInView(cardRef, { margin: '-10% 0px -10% 0px', amount: 0.35 });
   const [shouldRenderVideo, setShouldRenderVideo] = useState(index < 3);
@@ -195,6 +198,10 @@ const PortfolioItem = memo(({ item, index }: { item: PortfolioItemData; index: n
     }
   }, [inView]);
 
+  const handleClick = useCallback(() => {
+    onSelect(item);
+  }, [item, onSelect]);
+
   return (
     <motion.div
       ref={cardRef}
@@ -202,6 +209,7 @@ const PortfolioItem = memo(({ item, index }: { item: PortfolioItemData; index: n
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: index * 0.1 }}
+      onClick={handleClick}
       className="group relative aspect-[4/5] overflow-hidden rounded-2xl cursor-pointer border border-white/10 will-change-transform will-change-opacity bg-black/40"
     >
       {/* Video Background */}
@@ -245,12 +253,11 @@ const PortfolioItem = memo(({ item, index }: { item: PortfolioItemData; index: n
             {item.icon}
             <span className="text-xs font-medium text-white">{item.category}</span>
           </div>
-          <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">{item.title}</h3>
+          <h3 className="text-xl md:text-2xl font-bold text-white mb-2">{item.title}</h3>
           <p className="text-base text-gray-400 mb-4">{item.description}</p>
-          <div className="flex items-center gap-2 text-white group-hover:text-accent-primary transition-colors">
+          <div className="flex items-center gap-2 text-accent-primary transition-colors">
             <Play className="w-5 h-5" />
-            <span className="text-base font-medium">View Project</span>
-            <ExternalLink className="w-5 h-5" />
+            <span className="text-base font-medium">Watch Full Video</span>
           </div>
         </div>
       </div>
@@ -264,15 +271,26 @@ const PortfolioItem = memo(({ item, index }: { item: PortfolioItemData; index: n
 PortfolioItem.displayName = 'PortfolioItem';
 
 export default function Portfolio() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get('category') || 'All';
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const deferredCategory = useDeferredValue(selectedCategory);
   const [hasMounted, setHasMounted] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<PortfolioItemData | null>(null);
 
   // Fetch media from R2
   const { data: projectsData, loading: projectsLoading } = useProjectsMedia();
 
   useEffect(() => {
     setHasMounted(true);
+  }, []);
+
+  const handleSelectVideo = useCallback((item: PortfolioItemData) => {
+    setSelectedVideo(item);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedVideo(null);
   }, []);
 
   // Only use R2 data after mount to avoid hydration mismatch
@@ -304,8 +322,8 @@ export default function Portfolio() {
   ];
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <LazyShaderBackground />
+    <div className="relative min-h-screen overflow-hidden bg-neutral-950">
+      <BackgroundBeams className="fixed inset-0 z-0" />
 
       {/* Hero Section */}
       <section className="relative min-h-[80vh] flex items-center justify-center px-4 pt-32">
@@ -315,10 +333,10 @@ export default function Portfolio() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1 }}
           >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-[10rem] font-bold mb-6 md:mb-8 text-white leading-[0.9] tracking-tight px-4">
+            <h1 className="heading-font text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-[6.5rem] font-bold mb-6 md:mb-8 text-white leading-[0.9] tracking-[0.08em] px-4">
               Featured
               <br />
-              <span className="text-accent-primary">Projects</span>
+              <span className="accent-gradient">Projects</span>
             </h1>
 
             <motion.p
@@ -372,11 +390,26 @@ export default function Portfolio() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
             {filteredItems.map((item, index) => (
-              <PortfolioItem key={item.id} item={item} index={index} />
+              <PortfolioItem
+                key={item.id}
+                item={item}
+                index={index}
+                onSelect={handleSelectVideo}
+              />
             ))}
           </div>
         </div>
       </section>
+
+      {/* Video Player Modal */}
+      <VideoPlayerModal
+        isOpen={!!selectedVideo}
+        onClose={handleCloseModal}
+        streamId={selectedVideo?.streamId}
+        videoSrc={selectedVideo?.video}
+        title={selectedVideo?.title || ''}
+        category={selectedVideo?.category || ''}
+      />
     </div>
   );
 }

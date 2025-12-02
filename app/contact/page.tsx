@@ -161,11 +161,13 @@ export default function Contact() {
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
               className="inline-block mb-6 px-6 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20"
             >
-              <span className="text-sm font-medium text-white">Get In Touch</span>
+              <span className="subtitle-font text-xs sm:text-sm font-medium text-white tracking-[0.4em]">
+                GET IN TOUCH
+              </span>
             </motion.div>
 
             <h1
-              className="px-4 text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl"
+              className="heading-font px-4 text-2xl font-bold text-white sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl tracking-[0.08em]"
               aria-label={heroAnnouncement}
             >
               {heroLines.map((line, idx) => (
@@ -208,7 +210,9 @@ export default function Contact() {
                   <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 border border-white/20 mb-4 text-white">
                     {info.icon}
                   </div>
-                  <h3 className="text-sm font-medium text-gray-400 mb-2">{info.label}</h3>
+                  <h3 className="subtitle-font text-[0.65rem] text-gray-400 mb-2 tracking-[0.25em]">
+                    {info.label}
+                  </h3>
                   <p className="text-lg font-semibold text-white">{info.value}</p>
                 </div>
               </motion.a>
@@ -218,7 +222,7 @@ export default function Contact() {
       </section>
 
       {/* Lead Capture Form */}
-      <section className="relative py-16 px-4 pb-32">
+      <section id="contact-form" className="relative py-16 px-4 pb-32">
         <div className="max-w-7xl mx-auto">
           <LeadCapture />
         </div>

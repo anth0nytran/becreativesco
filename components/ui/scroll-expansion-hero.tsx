@@ -305,6 +305,9 @@ const ScrollExpandMedia = ({
                         autoPlay
                         loop
                         muted
+                        lazy={false}
+                        priority
+                        visibilityThreshold={0}
                         className='w-full h-full object-cover rounded-xl'
                       />
                     ) : (
@@ -355,7 +358,7 @@ const ScrollExpandMedia = ({
                 <div className='flex flex-col items-center text-center relative z-10 mt-4 transition-none'>
                   {date && (
                     <p
-                      className='text-sm sm:text-base md:text-lg lg:text-xl text-accent-primary font-medium'
+                      className='text-sm sm:text-base md:text-lg lg:text-xl font-medium accent-gradient'
                       style={{ transform: `translateX(-${textTranslateX}vw)` }}
                     >
                       {date}
@@ -399,13 +402,13 @@ const ScrollExpandMedia = ({
                 }`}
               >
                 <motion.h2
-                  className='text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white transition-none'
+                  className='heading-font text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white transition-none tracking-[0.08em]'
                   style={{ transform: `translateX(-${textTranslateX}vw)` }}
                 >
                   {firstWord}
                 </motion.h2>
                 <motion.h2
-                  className='text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-center text-white transition-none'
+                  className='heading-font text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-center text-white transition-none tracking-[0.08em]'
                   style={{ transform: `translateX(${textTranslateX}vw)` }}
                 >
                   {restOfTitle}

@@ -27,6 +27,7 @@ type LeadFormData = z.infer<typeof leadSchema>;
 
 const LeadCapture = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -37,14 +38,37 @@ const LeadCapture = () => {
   });
 
   const onSubmit = async (data: LeadFormData) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log('Lead captured:', data);
-    setIsSubmitted(true);
-    reset();
+    setSubmitError(null);
     
-    // Reset success message after 5 seconds
-    setTimeout(() => setIsSubmitted(false), 5000);
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send message');
+      }
+
+      console.log('Lead submitted successfully:', result);
+      setIsSubmitted(true);
+      reset();
+      
+      // Reset success message after 5 seconds
+      setTimeout(() => setIsSubmitted(false), 5000);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      setSubmitError(
+        error instanceof Error 
+          ? error.message 
+          : 'Something went wrong. Please try again.'
+      );
+    }
   };
 
   return (
@@ -235,6 +259,17 @@ const LeadCapture = () => {
                   </motion.p>
                 )}
               </div>
+
+              {/* Error Message */}
+              {submitError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm text-center"
+                >
+                  {submitError}
+                </motion.div>
+              )}
 
               {/* Submit Button */}
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
