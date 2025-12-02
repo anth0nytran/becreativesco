@@ -6,7 +6,7 @@ import StreamPlayer from '@/components/StreamPlayer';
 import VideoPlayerModal from '@/components/VideoPlayerModal';
 import { BackgroundBeams } from '@/components/ui/background-beams';
 import { Play, ExternalLink, Film, Camera, Sparkles } from 'lucide-react';
-import { memo, useDeferredValue, useMemo, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
+import { memo, useDeferredValue, useMemo, useState, useEffect, useRef, ReactNode, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useProjectsMedia, MediaItem } from '@/hooks/useMedia';
 
@@ -270,7 +270,7 @@ const PortfolioItem = memo(({ item, index, onSelect }: PortfolioItemProps) => {
 
 PortfolioItem.displayName = 'PortfolioItem';
 
-export default function Portfolio() {
+function PortfolioContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('category') || 'All';
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
@@ -411,5 +411,19 @@ export default function Portfolio() {
         category={selectedVideo?.category || ''}
       />
     </div>
+  );
+}
+
+export default function PortfolioPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-black text-white">
+          Loading portfolio…
+        </div>
+      }
+    >
+      <PortfolioContent />
+    </Suspense>
   );
 }
