@@ -10,7 +10,7 @@ export const revalidate = 0;
  */
 export async function GET() {
   try {
-    const objects = await listObjectsByPrefix('gallery/');
+    const objects = await listObjectsByPrefix('videos/gallery/');
     let items = toMediaItems(objects);
     items = sortMediaItems(items);
 
