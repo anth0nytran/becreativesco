@@ -14,21 +14,32 @@ import ImageAutoSlider from '@/components/ui/image-auto-slider';
 import { ArrowDown, ArrowUpRight, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Suspense, memo, useEffect, useRef, useState } from 'react';
+import { Suspense, memo, useEffect, useRef, useState, ReactNode } from 'react';
 import { useHeroMedia, useGalleryMedia, useGridMedia, usePortfolioMedia, MediaItem } from '@/hooks/useMedia';
+import StreamPlayer from '@/components/StreamPlayer';
 
 // Fallback local paths (used when R2 is not configured or fails)
 const FALLBACK_HERO_VIDEO = '/assets/videos/longerdemoreel.mp4';
 const FALLBACK_HERO_POSTER = '/assets/photos/untitled-2.jpg';
 
 // Portfolio metadata (titles, categories, icons) - URLs will come from R2
-const portfolioMetadata = [
+type PortfolioMetadataItem = {
+  id: number;
+  title: string;
+  category: string;
+  description: string;
+  icon: ReactNode;
+  streamId?: string;
+};
+
+const portfolioMetadata: PortfolioMetadataItem[] = [
   {
     id: 1,
     title: 'F1 Arcade - Las Vegas',
     category: 'Branding',
     description: '',
     icon: <Play className="w-5 h-5" />,
+  streamId: '2e95cbc8ca3b3bb719ded77afa7f5950',
   },
   {
     id: 2,
@@ -36,6 +47,7 @@ const portfolioMetadata = [
     category: 'Hospitality & Events',
     description: '',
     icon: <Play className="w-5 h-5" />,
+    streamId: '4e284ec992e64d442cb8b22158fa7ecf',
   },
   {
     id: 3,
@@ -43,6 +55,7 @@ const portfolioMetadata = [
     category: 'Branding',
     description: '',
     icon: <Play className="w-5 h-5" />,
+    streamId: 'f1524e7ef25164b94b3ebb808ea9fd8a',
   },
   {
     id: 4,
@@ -50,27 +63,31 @@ const portfolioMetadata = [
     category: 'Hospitality & Events',
     description: '',
     icon: <Play className="w-5 h-5" />,
+    streamId: 'cbbfdcb3d23532c724140c1d7d4f6d1d',
   },
   {
     id: 5,
     title: 'Encore Boston Harbor - Red8',
-    category: 'Commercial',
+    category: 'Real Estate & Development',
     description: '',
     icon: <Play className="w-5 h-5" />,
+    streamId: 'a6e21326610b2f4ed62830faffb8d2a7',
   },
   {
     id: 6,
     title: 'The Grand Boston - Catdealers',
-    category: 'Music Video',
+    category: 'Nightlife & Concerts',
     description: '',
     icon: <Play className="w-5 h-5" />,
+    streamId: 'cbbfdcb3d23532c724140c1d7d4f6d1d',
   },
   {
     id: 7,
-    title: 'Charmalagne Memoire',
-    category: 'Commercial',
-    description: 'Artistic showcase of Charmalagne Memoire project.',
+    title: 'Lisa’s Book Club x Memorie',
+    category: 'Branding',
+    description: '',
     icon: <Play className="w-5 h-5" />,
+    streamId: 'f1524e7ef25164b94b3ebb808ea9fd8a',
   },
   {
     id: 8,
@@ -78,13 +95,15 @@ const portfolioMetadata = [
     category: 'Branding',
     description: '',
     icon: <Play className="w-5 h-5" />,
+    streamId: '63eef3c7ae27733273f1f4834b017ad6',
   },
   {
     id: 9,
     title: 'Big Night Life - Cheatcodes',
-    category: 'Commercial',
+    category: 'Nightlife & Concerts',
     description: '',
     icon: <Play className="w-5 h-5" />,
+    streamId: '9934047f261fa18cbac6fa0f62dededc',
   },
 ];
 
@@ -217,12 +236,13 @@ const Home = memo(function Home() {
     : fallbackGridVideos;
 
   // Build portfolio items with R2 URLs or fallback
-  const portfolioItems = portfolioMetadata.map((meta, idx) => {
+const portfolioItems = portfolioMetadata.map((meta, idx) => {
     const r2Video = useR2Data ? portfolioData?.items?.[idx] : null;
     const fallback = fallbackPortfolioMedia[idx];
     return {
       ...meta,
-      video: r2Video?.url || fallback?.video || '',
+      streamId: meta.streamId,
+      video: meta.streamId ? '' : r2Video?.url || fallback?.video || '',
       image: fallback?.image || '', // Poster images come from fallback for now
     };
   });
@@ -473,17 +493,27 @@ const Home = memo(function Home() {
                 className="relative aspect-[4/5] rounded-xl overflow-hidden border border-white/10 group cursor-pointer pointer-events-auto will-change-transform will-change-opacity"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black pointer-events-none">
-                  <LazyVideo
-                    src={item.video}
-                    poster={item.image}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    priority={index < 3}
-                    lazy={index >= 3}
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500 ease-out"
-                  />
+                  {item.streamId ? (
+                    <StreamPlayer
+                      uid={item.streamId}
+                      className="h-full w-full opacity-60 group-hover:opacity-100 transition-opacity duration-500 ease-out"
+                      autoPlay
+                      loop
+                      muted
+                    />
+                  ) : (
+                    <LazyVideo
+                      src={item.video}
+                      poster={item.image}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      priority={index < 3}
+                      lazy={index >= 3}
+                      className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500 ease-out"
+                    />
+                  )}
                 </div>
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500 ease-out pointer-events-none" />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-out pointer-events-none">
