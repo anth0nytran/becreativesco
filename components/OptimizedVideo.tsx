@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, memo } from 'react';
 
 interface OptimizedVideoProps {
   src: string;
-  poster?: string;
   className?: string;
   autoPlay?: boolean;
   loop?: boolean;
@@ -17,7 +16,6 @@ interface OptimizedVideoProps {
 
 const OptimizedVideo = memo(({
   src,
-  poster,
   className = '',
   autoPlay = false,
   loop = true,

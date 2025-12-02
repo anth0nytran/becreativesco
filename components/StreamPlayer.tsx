@@ -11,7 +11,6 @@ interface StreamPlayerProps {
   loop?: boolean;
   muted?: boolean;
   controls?: boolean;
-  poster?: string;
 }
 
 const getHlsUrl = (uid: string) =>
@@ -27,7 +26,6 @@ const StreamPlayer = memo(
     loop = true,
     muted = true,
     controls = false,
-    poster,
   }: StreamPlayerProps) => {
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -80,9 +78,8 @@ const StreamPlayer = memo(
         muted={muted}
         controls={controls}
         playsInline
-        poster={poster}
         className={cn(
-          "h-full w-full object-cover object-center rounded-xl transition-opacity duration-300",
+          "h-full w-full object-cover object-center transition-opacity duration-300",
           className
         )}
         preload="auto"

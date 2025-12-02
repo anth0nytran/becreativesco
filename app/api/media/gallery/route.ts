@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { listObjectsByPrefix, toMediaItems, sortMediaItems } from '@/lib/r2Client';
+import { listObjectsByPrefix, toMediaItems, sortMediaItems, R2Object } from '@/lib/r2Client';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -10,8 +10,19 @@ export const revalidate = 0;
  */
 export async function GET() {
   try {
-    const objects = await listObjectsByPrefix('videos/gallery/');
-    let items = toMediaItems(objects);
+    const prefixes = ['gallery/', 'photos/', 'photos/photos/'];
+    const seen = new Map<string, R2Object>();
+
+    for (const prefix of prefixes) {
+      const objects = await listObjectsByPrefix(prefix);
+      objects.forEach((obj) => {
+        if (obj.key && !seen.has(obj.key)) {
+          seen.set(obj.key, obj);
+        }
+      });
+    }
+
+    let items = toMediaItems(Array.from(seen.values()));
     items = sortMediaItems(items);
 
     // Filter to images only for gallery

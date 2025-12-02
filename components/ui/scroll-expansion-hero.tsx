@@ -10,29 +10,30 @@ import {
   WheelEvent,
 } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import StreamPlayer from '@/components/StreamPlayer';
 
 interface ScrollExpandMediaProps {
   mediaType?: 'video' | 'image';
   mediaSrc: string;
-  posterSrc?: string;
   bgImageSrc: string;
   title?: string;
   date?: string;
   scrollToExpand?: string;
   textBlend?: boolean;
   children?: ReactNode;
+  streamId?: string;
 }
 
 const ScrollExpandMedia = ({
   mediaType = 'video',
   mediaSrc,
-  posterSrc,
   bgImageSrc,
   title,
   date,
   scrollToExpand,
   textBlend,
   children,
+  streamId,
 }: ScrollExpandMediaProps) => {
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [showContent, setShowContent] = useState<boolean>(false);
@@ -297,10 +298,18 @@ const ScrollExpandMedia = ({
                       />
                     </div>
                   ) : (
-                    <div className='relative w-full h-full pointer-events-none'>
+                  <div className='relative w-full h-full pointer-events-none'>
+                    {streamId ? (
+                      <StreamPlayer
+                        uid={streamId}
+                        autoPlay
+                        loop
+                        muted
+                        className='w-full h-full object-cover rounded-xl'
+                      />
+                    ) : (
                       <video
                         src={mediaSrc}
-                        poster={posterSrc}
                         autoPlay
                         muted
                         loop
@@ -311,6 +320,7 @@ const ScrollExpandMedia = ({
                         disablePictureInPicture
                         disableRemotePlayback
                       />
+                    )}
                       <div
                         className='absolute inset-0 z-10'
                         style={{ pointerEvents: 'none' }}

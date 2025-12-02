@@ -15,7 +15,7 @@ import { ArrowDown, ArrowUpRight, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Suspense, memo, useEffect, useRef, useState, ReactNode } from 'react';
-import { useHeroMedia, useGalleryMedia, useGridMedia, usePortfolioMedia, MediaItem } from '@/hooks/useMedia';
+import { useHeroMedia, useGalleryMedia, useGridMedia, usePortfolioMedia } from '@/hooks/useMedia';
 import StreamPlayer from '@/components/StreamPlayer';
 
 // Fallback local paths (used when R2 is not configured or fails)
@@ -36,7 +36,7 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   {
     id: 1,
     title: 'F1 Arcade - Las Vegas',
-    category: 'Branding',
+    category: 'Hospitality & Events',
     description: '',
     icon: <Play className="w-5 h-5" />,
   streamId: '2e95cbc8ca3b3bb719ded77afa7f5950',
@@ -44,7 +44,7 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   {
     id: 2,
     title: 'The Grand Boston',
-    category: 'Hospitality & Events',
+    category: 'Nightlife & Concerts',
     description: '',
     icon: <Play className="w-5 h-5" />,
     streamId: '4e284ec992e64d442cb8b22158fa7ecf',
@@ -52,7 +52,7 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   {
     id: 3,
     title: 'The Mystique Boston',
-    category: 'Branding',
+    category: 'Hospitality & Events',
     description: '',
     icon: <Play className="w-5 h-5" />,
     streamId: 'f1524e7ef25164b94b3ebb808ea9fd8a',
@@ -68,7 +68,7 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   {
     id: 5,
     title: 'Encore Boston Harbor - Red8',
-    category: 'Real Estate & Development',
+    category: 'Hospitality & Events',
     description: '',
     icon: <Play className="w-5 h-5" />,
     streamId: 'a6e21326610b2f4ed62830faffb8d2a7',
@@ -84,7 +84,7 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   {
     id: 7,
     title: 'Lisa’s Book Club x Memorie',
-    category: 'Branding',
+    category: 'Hospitality & Events',
     description: '',
     icon: <Play className="w-5 h-5" />,
     streamId: 'f1524e7ef25164b94b3ebb808ea9fd8a',
@@ -111,8 +111,8 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
 const gridMetadata = [
   { id: 1, title: 'Hospitality & Events', number: '01', position: 'left' },
   { id: 2, title: 'Nightlife & Concerts', number: '02', position: 'right' },
-  { id: 3, title: 'Real Estate & Development', number: '01', position: 'left' },
-  { id: 4, title: 'Branding', number: '02', position: 'right' },
+  { id: 3, title: 'Real Estate & Development', number: '03', position: 'left' },
+  { id: 4, title: 'Branding', number: '04', position: 'right' },
 ];
 
 // Fallback local gallery images
@@ -144,15 +144,23 @@ const fallbackGridVideos = [
 
 // Fallback portfolio videos and posters
 const fallbackPortfolioMedia = [
-  { video: '/assets/videos/F1Arcade_NowOpenReel_(1080x1920)_v3.mp4', image: '/assets/photos/untitled-2.jpg' },
-  { video: '/assets/videos/R3hab_GRANDRecap.mp4', image: '/assets/photos/untitled-5.jpg' },
-  { video: '/assets/videos/3.6.25_MystiqueFoodShoot_WagyuToast.mp4', image: '/assets/photos/untitled-10.jpg' },
-  { video: '/assets/videos/ToppsRIpNightRecap_(PaytonPritchard)_v2.mp4', image: '/assets/photos/untitled-11.jpg' },
-  { video: '/assets/videos/EncoreBH_Red8_SashimiPlatter.mp4', image: '/assets/photos/untitled-12.jpg' },
-  { video: '/assets/videos/12.20.24_CatDealers_GRAND(1920x1080).mp4', image: '/assets/photos/untitled-13.jpg' },
-  { video: '/assets/videos/CharmalagneMemoire_1920x1080.mp4', image: '/assets/photos/untitled-16.jpg' },
-  { video: '/assets/videos/HV_POOLSHOOT_HVPRE-ROLLSJULY4TH_1920X1080.mp4', image: '/assets/photos/untitled-21.jpg' },
-  { video: '/assets/videos/11.30.24_CheatcodesRecap.mp4', image: '/assets/photos/untitled-26.jpg' },
+  { video: '/assets/videos/F1Arcade_NowOpenReel_(1080x1920)_v3.mp4' },
+  { video: '/assets/videos/R3hab_GRANDRecap.mp4' },
+  { video: '/assets/videos/3.6.25_MystiqueFoodShoot_WagyuToast.mp4' },
+  { video: '/assets/videos/ToppsRIpNightRecap_(PaytonPritchard)_v2.mp4' },
+  { video: '/assets/videos/EncoreBH_Red8_SashimiPlatter.mp4' },
+  { video: '/assets/videos/12.20.24_CatDealers_GRAND(1920x1080).mp4' },
+  { video: '/assets/videos/CharmalagneMemoire_1920x1080.mp4' },
+  { video: '/assets/videos/HV_POOLSHOOT_HVPRE-ROLLSJULY4TH_1920X1080.mp4' },
+  { video: '/assets/videos/11.30.24_CheatcodesRecap.mp4' },
+];
+
+const HERO_STREAM_ID = '5ce0fd954f2b3a8d04a1f994581c3425';
+const GRID_STREAM_IDS = [
+  '2e95cbc8ca3b3bb719ded77afa7f5950', // Hospitality & Events
+  '4e284ec992e64d442cb8b22158fa7ecf', // Nightlife & Concerts
+  'c9bae1178b2d2bd68de805959df7355f', // Real Estate & Development
+  '9b4f6fd0febf4d83297232cda8acbaef', // Branding
 ];
 
 const heroStats = [
@@ -222,8 +230,11 @@ const Home = memo(function Home() {
   const useR2Data = hasMounted && !heroLoading && !galleryLoading && !gridLoading && !portfolioLoading;
 
   // Resolve hero media (R2 or fallback)
-  const heroVideoSrc = (useR2Data && heroData?.item?.url) || FALLBACK_HERO_VIDEO;
-  const heroPosterSrc = (useR2Data && heroData?.items?.find((i) => i.type === 'image')?.url) || FALLBACK_HERO_POSTER;
+  const heroFallbackVideo =
+    (useR2Data && heroData?.item?.url) || FALLBACK_HERO_VIDEO;
+  const heroPosterSrc =
+    (useR2Data && heroData?.items?.find((i) => i.type === 'image')?.url) ||
+    FALLBACK_HERO_POSTER;
 
   // Resolve gallery images (R2 or fallback)
   const galleryImages = (useR2Data && galleryData?.items?.length)
@@ -243,7 +254,6 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
       ...meta,
       streamId: meta.streamId,
       video: meta.streamId ? '' : r2Video?.url || fallback?.video || '',
-      image: fallback?.image || '', // Poster images come from fallback for now
     };
   });
 
@@ -255,7 +265,8 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
       {/* Scroll Expansion Hero Section */}
       <ScrollExpandMedia
         mediaType="video"
-        mediaSrc={heroVideoSrc}
+        mediaSrc={heroFallbackVideo}
+        streamId={HERO_STREAM_ID}
         bgImageSrc={heroPosterSrc}
         title=""
         date="Featured Work"
@@ -301,16 +312,26 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
-                  <OptimizedVideo
-                    src={gridVideos[0] || fallbackGridVideos[0]}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    priority={false}
-                    lazy={true}
-                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                  />
+                  {GRID_STREAM_IDS[0] ? (
+                    <StreamPlayer
+                      uid={GRID_STREAM_IDS[0]}
+                      autoPlay
+                      loop
+                      muted
+                      className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                    />
+                  ) : (
+                    <OptimizedVideo
+                      src={gridVideos[0] || fallbackGridVideos[0]}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      priority={false}
+                      lazy
+                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                    />
+                  )}
                 </Suspense>
               </div>
               <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
@@ -343,16 +364,26 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
-                  <OptimizedVideo
-                    src={gridVideos[1] || fallbackGridVideos[1]}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    priority={false}
-                    lazy={true}
-                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                  />
+                  {GRID_STREAM_IDS[1] ? (
+                    <StreamPlayer
+                      uid={GRID_STREAM_IDS[1]}
+                      autoPlay
+                      loop
+                      muted
+                      className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                    />
+                  ) : (
+                    <OptimizedVideo
+                      src={gridVideos[1] || fallbackGridVideos[1]}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      priority={false}
+                      lazy
+                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                    />
+                  )}
                 </Suspense>
               </div>
               <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
@@ -387,16 +418,26 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
-                  <OptimizedVideo
-                    src={gridVideos[2] || fallbackGridVideos[2]}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    priority={false}
-                    lazy={true}
-                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                  />
+                  {GRID_STREAM_IDS[2] ? (
+                    <StreamPlayer
+                      uid={GRID_STREAM_IDS[2]}
+                      autoPlay
+                      loop
+                      muted
+                      className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                    />
+                  ) : (
+                    <OptimizedVideo
+                      src={gridVideos[2] || fallbackGridVideos[2]}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      priority={false}
+                      lazy
+                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                    />
+                  )}
                 </Suspense>
               </div>
               <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
@@ -429,16 +470,26 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
-                  <OptimizedVideo
-                    src={gridVideos[3] || fallbackGridVideos[3]}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    priority={false}
-                    lazy={true}
-                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                  />
+                  {GRID_STREAM_IDS[3] ? (
+                    <StreamPlayer
+                      uid={GRID_STREAM_IDS[3]}
+                      autoPlay
+                      loop
+                      muted
+                      className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                    />
+                  ) : (
+                    <OptimizedVideo
+                      src={gridVideos[3] || fallbackGridVideos[3]}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      priority={false}
+                      lazy
+                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                    />
+                  )}
                 </Suspense>
               </div>
               <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-700 z-[1]" />
@@ -496,7 +547,7 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
                   {item.streamId ? (
                     <StreamPlayer
                       uid={item.streamId}
-                      className="h-full w-full opacity-60 group-hover:opacity-100 transition-opacity duration-500 ease-out"
+                      className="h-full w-full object-cover object-center opacity-60 group-hover:opacity-100 transition-opacity duration-500 ease-out"
                       autoPlay
                       loop
                       muted
@@ -504,7 +555,6 @@ const portfolioItems = portfolioMetadata.map((meta, idx) => {
                   ) : (
                     <LazyVideo
                       src={item.video}
-                      poster={item.image}
                       autoPlay
                       loop
                       muted

@@ -5,7 +5,6 @@ import OptimizedVideo from './OptimizedVideo';
 
 interface LazyVideoProps {
   src: string;
-  poster?: string;
   className?: string;
   autoPlay?: boolean;
   loop?: boolean;
@@ -18,7 +17,6 @@ interface LazyVideoProps {
 // Lazy-loaded video component for below-the-fold content
 const LazyVideo = memo(({
   src,
-  poster,
   className = '',
   autoPlay = false,
   loop = true,
@@ -30,7 +28,6 @@ const LazyVideo = memo(({
   return (
     <OptimizedVideo
       src={src}
-      poster={poster}
       className={className}
       autoPlay={autoPlay}
       loop={loop}
