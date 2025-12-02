@@ -63,7 +63,7 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
     category: 'Hospitality & Events',
     description: '',
     icon: <Play className="w-5 h-5" />,
-    streamId: 'cbbfdcb3d23532c724140c1d7d4f6d1d',
+    streamId: '20422e0a26ed378d2c59b7caef9800e8',
   },
   {
     id: 5,
