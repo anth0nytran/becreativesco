@@ -36,7 +36,9 @@ yarn-error.log*
 next-env.d.ts
 
 # large media assets (kept local, not in git)
-assets/
+/assets/
 public/assets/videos/
 public/assets/photos/
+public/assets/Preview/
+public/assets/Read\ Me.txt
 
