@@ -3,23 +3,22 @@
 import { motion, useInView } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import OptimizedVideo from '@/components/OptimizedVideo';
-import { getVideoUrl, getPhotoUrl } from '@/lib/media';
 import { Play, ExternalLink, Film, Camera, Sparkles } from 'lucide-react';
 import { memo, useDeferredValue, useMemo, useState, useEffect, useRef } from 'react';
+import { useProjectsMedia, MediaItem } from '@/hooks/useMedia';
 
 const LazyShaderBackground = dynamic(() => import('@/components/ShaderBackground'), {
   ssr: false,
   loading: () => <div className="fixed inset-0 -z-10 bg-black" aria-hidden="true" />,
 });
 
-const portfolioItems = [
+// Portfolio metadata (titles, categories, icons) - URLs will come from R2
+const portfolioMetadata = [
   {
     id: 1,
     title: 'F1 Arcade - Las Vegas',
     category: 'Branding',
     description: '',
-    video: getVideoUrl('F1Arcade_NowOpenReel_(1080x1920)_v3.mp4'),
-    image: getPhotoUrl('untitled-2.jpg'),
     icon: <Film className="w-5 h-5" />,
   },
   {
@@ -27,8 +26,6 @@ const portfolioItems = [
     title: 'Encore Boston Harbor - On Deck',
     category: 'Music Video',
     description: '',
-    video: getVideoUrl('CentralCee_GrandRecap_1920x1080.mp4'),
-    image: getPhotoUrl('untitled-5.jpg'),
     icon: <Film className="w-5 h-5" />,
   },
   {
@@ -36,8 +33,6 @@ const portfolioItems = [
     title: 'Big Night Fitness - FitFest',
     category: 'Commercial',
     description: '',
-    video: getVideoUrl('3.6.25_MystiqueFoodShoot_WagyuToast.mp4'),
-    image: getPhotoUrl('untitled-10.jpg'),
     icon: <Camera className="w-5 h-5" />,
   },
   {
@@ -45,8 +40,6 @@ const portfolioItems = [
     title: 'The Grand Boston - Catdealers',
     category: 'Music Video',
     description: '',
-    video: getVideoUrl('MATRODA_BOATCRUISERecap.mp4'),
-    image: getPhotoUrl('untitled-11.jpg'),
     icon: <Film className="w-5 h-5" />,
   },
   {
@@ -54,8 +47,6 @@ const portfolioItems = [
     title: 'Happy Valley',
     category: 'Commercial',
     description: '',
-    video: getVideoUrl('EncoreBH_Red8_SashimiPlatter.mp4'),
-    image: getPhotoUrl('untitled-12.jpg'),
     icon: <Camera className="w-5 h-5" />,
   },
   {
@@ -63,8 +54,6 @@ const portfolioItems = [
     title: 'Reebook',
     category: 'Music Video',
     description: '',
-    video: getVideoUrl('AboogieGrand_1920x1080copy.mp4'),
-    image: getPhotoUrl('untitled-13.jpg'),
     icon: <Film className="w-5 h-5" />,
   },
   {
@@ -72,8 +61,6 @@ const portfolioItems = [
     title: 'F1 Arcade - Denver',
     category: 'Commercial',
     description: '',
-    video: getVideoUrl('CharmalagneMemoire_1920x1080.mp4'),
-    image: getPhotoUrl('untitled-16.jpg'),
     icon: <Sparkles className="w-5 h-5" />,
   },
   {
@@ -81,8 +68,6 @@ const portfolioItems = [
     title: 'Univ. Of Mass - Lowell Mens Volleyball',
     category: 'Commercial',
     description: '',
-    video: getVideoUrl('HV_POOLSHOOT_HVPRE-ROLLSJULY4TH_1920X1080.mp4'),
-    image: getPhotoUrl('untitled-21.jpg'),
     icon: <Camera className="w-5 h-5" />,
   },
   {
@@ -90,8 +75,6 @@ const portfolioItems = [
     title: 'Boatcruise Boston',
     category: 'Commercial',
     description: '',
-    video: getVideoUrl('3.6.25_MystiqueFoodShoot_ChickenWings.mp4'),
-    image: getPhotoUrl('untitled-26.jpg'),
     icon: <Camera className="w-5 h-5" />,
   },
   {
@@ -99,8 +82,6 @@ const portfolioItems = [
     title: 'The Grand Boston - Central Cee',
     category: 'Commercial',
     description: '',
-    video: getVideoUrl('3.6.25_MystiqueFoodShoot_TiktokChicken.mp4'),
-    image: getPhotoUrl('untitled-30copy.jpg'),
     icon: <Camera className="w-5 h-5" />,
   },
   {
@@ -108,8 +89,6 @@ const portfolioItems = [
     title: 'SSRI Clothing',
     category: 'Music Video',
     description: '',
-    video: getVideoUrl('Matroda_Recap.mp4'),
-    image: getPhotoUrl('untitled-45.jpg'),
     icon: <Film className="w-5 h-5" />,
   },
   {
@@ -117,13 +96,37 @@ const portfolioItems = [
     title: 'Big Night Live x Happy Valley',
     category: 'Commercial',
     description: '',
-    video: getVideoUrl('EncoreBH__Red8_SoftShellCrab.mp4'),
-    image: getPhotoUrl('untitled-47.jpg'),
     icon: <Camera className="w-5 h-5" />,
   },
 ];
 
-const PortfolioItem = memo(({ item, index }: { item: typeof portfolioItems[0]; index: number }) => {
+// Fallback local media
+const fallbackProjectsMedia = [
+  { video: '/assets/videos/F1Arcade_NowOpenReel_(1080x1920)_v3.mp4', image: '/assets/photos/untitled-2.jpg' },
+  { video: '/assets/videos/CentralCee_GrandRecap_1920x1080.mp4', image: '/assets/photos/untitled-5.jpg' },
+  { video: '/assets/videos/3.6.25_MystiqueFoodShoot_WagyuToast.mp4', image: '/assets/photos/untitled-10.jpg' },
+  { video: '/assets/videos/MATRODA_BOATCRUISERecap.mp4', image: '/assets/photos/untitled-11.jpg' },
+  { video: '/assets/videos/EncoreBH_Red8_SashimiPlatter.mp4', image: '/assets/photos/untitled-12.jpg' },
+  { video: '/assets/videos/AboogieGrand_1920x1080copy.mp4', image: '/assets/photos/untitled-13.jpg' },
+  { video: '/assets/videos/CharmalagneMemoire_1920x1080.mp4', image: '/assets/photos/untitled-16.jpg' },
+  { video: '/assets/videos/HV_POOLSHOOT_HVPRE-ROLLSJULY4TH_1920X1080.mp4', image: '/assets/photos/untitled-21.jpg' },
+  { video: '/assets/videos/3.6.25_MystiqueFoodShoot_ChickenWings.mp4', image: '/assets/photos/untitled-26.jpg' },
+  { video: '/assets/videos/3.6.25_MystiqueFoodShoot_TiktokChicken.mp4', image: '/assets/photos/untitled-30copy.jpg' },
+  { video: '/assets/videos/Matroda_Recap.mp4', image: '/assets/photos/untitled-45.jpg' },
+  { video: '/assets/videos/EncoreBH__Red8_SoftShellCrab.mp4', image: '/assets/photos/untitled-47.jpg' },
+];
+
+interface PortfolioItemData {
+  id: number;
+  title: string;
+  category: string;
+  description: string;
+  video: string;
+  image: string;
+  icon: React.ReactNode;
+}
+
+const PortfolioItem = memo(({ item, index }: { item: PortfolioItemData; index: number }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const inView = useInView(cardRef, { margin: '-10% 0px -10% 0px', amount: 0.35 });
   const [shouldRenderVideo, setShouldRenderVideo] = useState(index < 3);
@@ -198,10 +201,26 @@ export default function Portfolio() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const deferredCategory = useDeferredValue(selectedCategory);
 
+  // Fetch media from R2
+  const { data: projectsData } = useProjectsMedia();
+
+  // Build portfolio items with R2 URLs or fallback
+  const portfolioItems: PortfolioItemData[] = useMemo(() => {
+    return portfolioMetadata.map((meta, idx) => {
+      const r2Video = projectsData?.items?.[idx];
+      const fallback = fallbackProjectsMedia[idx];
+      return {
+        ...meta,
+        video: r2Video?.url || fallback?.video || '',
+        image: fallback?.image || '', // Poster images from fallback for now
+      };
+    });
+  }, [projectsData]);
+
   const filteredItems = useMemo(() => {
     if (deferredCategory === 'All') return portfolioItems;
     return portfolioItems.filter((item) => item.category === deferredCategory);
-  }, [deferredCategory]);
+  }, [deferredCategory, portfolioItems]);
 
   const categories = [
     'All',

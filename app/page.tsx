@@ -11,21 +11,23 @@ import LazyVideo from '@/components/LazyVideo';
 import OptimizedImage from '@/components/OptimizedImage';
 import ScrollExpandMedia from '@/components/ui/scroll-expansion-hero';
 import ImageAutoSlider from '@/components/ui/image-auto-slider';
-import { getVideoUrl, getPhotoUrl } from '@/lib/media';
 import { ArrowDown, ArrowUpRight, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Suspense, memo, useEffect, useRef, useState } from 'react';
+import { useHeroMedia, useGalleryMedia, useGridMedia, usePortfolioMedia, MediaItem } from '@/hooks/useMedia';
 
-// Portfolio items with actual assets
-const portfolioItems = [
+// Fallback local paths (used when R2 is not configured or fails)
+const FALLBACK_HERO_VIDEO = '/assets/videos/longerdemoreel.mp4';
+const FALLBACK_HERO_POSTER = '/assets/photos/untitled-2.jpg';
+
+// Portfolio metadata (titles, categories, icons) - URLs will come from R2
+const portfolioMetadata = [
   {
     id: 1,
     title: 'F1 Arcade - Las Vegas',
     category: 'Branding',
     description: '',
-    video: getVideoUrl('F1Arcade_NowOpenReel_(1080x1920)_v3.mp4'),
-    image: getPhotoUrl('untitled-2.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
@@ -33,8 +35,6 @@ const portfolioItems = [
     title: 'The Grand Boston',
     category: 'Hospitality & Events',
     description: '',
-    video: getVideoUrl('R3hab_GRANDRecap.mp4'),
-    image: getPhotoUrl('untitled-5.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
@@ -42,8 +42,6 @@ const portfolioItems = [
     title: 'The Mystique Boston',
     category: 'Branding',
     description: '',
-    video: getVideoUrl('3.6.25_MystiqueFoodShoot_WagyuToast.mp4'),
-    image: getPhotoUrl('untitled-10.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
@@ -51,8 +49,6 @@ const portfolioItems = [
     title: 'Cardvault By Tom Brady',
     category: 'Hospitality & Events',
     description: '',
-    video: getVideoUrl('ToppsRIpNightRecap_(PaytonPritchard)_v2.mp4'),
-    image: getPhotoUrl('untitled-11.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
@@ -60,8 +56,6 @@ const portfolioItems = [
     title: 'Encore Boston Harbor - Red8',
     category: 'Commercial',
     description: '',
-    video: getVideoUrl('EncoreBH_Red8_SashimiPlatter.mp4'),
-    image: getPhotoUrl('untitled-12.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
@@ -69,8 +63,6 @@ const portfolioItems = [
     title: 'The Grand Boston - Catdealers',
     category: 'Music Video',
     description: '',
-    video: getVideoUrl('12.20.24_CatDealers_GRAND(1920x1080).mp4'),
-    image: getPhotoUrl('untitled-13.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
@@ -78,8 +70,6 @@ const portfolioItems = [
     title: 'Charmalagne Memoire',
     category: 'Commercial',
     description: 'Artistic showcase of Charmalagne Memoire project.',
-    video: getVideoUrl('CharmalagneMemoire_1920x1080.mp4'),
-    image: getPhotoUrl('untitled-16.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
@@ -87,8 +77,6 @@ const portfolioItems = [
     title: 'Happy Vally',
     category: 'Branding',
     description: '',
-    video: getVideoUrl('HV_POOLSHOOT_HVPRE-ROLLSJULY4TH_1920X1080.mp4'),
-    image: getPhotoUrl('untitled-21.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
   {
@@ -96,30 +84,57 @@ const portfolioItems = [
     title: 'Big Night Life - Cheatcodes',
     category: 'Commercial',
     description: '',
-    video: getVideoUrl('11.30.24_CheatcodesRecap.mp4'),
-    image: getPhotoUrl('untitled-26.jpg'),
     icon: <Play className="w-5 h-5" />,
   },
 ];
 
-// Local gallery images (via helper so they can come from Supabase or /public)
-const galleryImages = [
-  'untitled-2.jpg',
-  'untitled-5.jpg',
-  'untitled-8.jpg',
-  'untitled-10.jpg',
-  'untitled-11.jpg',
-  'untitled-12.jpg',
-  'untitled-13.jpg',
-  'untitled-16.jpg',
-  'untitled-21.jpg',
-  'untitled-26.jpg',
-  'untitled-30copy.jpg',
-  'untitled-45.jpg',
-  'untitled-47.jpg',
-  'Screenshot.png',
-  'Screenshot2.png',
-].map(getPhotoUrl);
+// Grid section metadata
+const gridMetadata = [
+  { id: 1, title: 'Hospitality & Events', number: '01', position: 'left' },
+  { id: 2, title: 'Nightlife & Concerts', number: '02', position: 'right' },
+  { id: 3, title: 'Real Estate & Development', number: '01', position: 'left' },
+  { id: 4, title: 'Branding', number: '02', position: 'right' },
+];
+
+// Fallback local gallery images
+const fallbackGalleryImages = [
+  '/assets/photos/untitled-2.jpg',
+  '/assets/photos/untitled-5.jpg',
+  '/assets/photos/untitled-8.jpg',
+  '/assets/photos/untitled-10.jpg',
+  '/assets/photos/untitled-11.jpg',
+  '/assets/photos/untitled-12.jpg',
+  '/assets/photos/untitled-13.jpg',
+  '/assets/photos/untitled-16.jpg',
+  '/assets/photos/untitled-21.jpg',
+  '/assets/photos/untitled-26.jpg',
+  '/assets/photos/untitled-30copy.jpg',
+  '/assets/photos/untitled-45.jpg',
+  '/assets/photos/untitled-47.jpg',
+  '/assets/photos/Screenshot.png',
+  '/assets/photos/Screenshot2.png',
+];
+
+// Fallback grid videos
+const fallbackGridVideos = [
+  '/assets/videos/F1Arcade_NowOpenReel_(1080x1920)_v3.mp4',
+  '/assets/videos/CentralCee_GrandRecap_1920x1080.mp4',
+  '/assets/videos/F1Arcade_NowOpenReel_(1080x1920)_v3.mp4',
+  '/assets/videos/CentralCee_GrandRecap_1920x1080.mp4',
+];
+
+// Fallback portfolio videos and posters
+const fallbackPortfolioMedia = [
+  { video: '/assets/videos/F1Arcade_NowOpenReel_(1080x1920)_v3.mp4', image: '/assets/photos/untitled-2.jpg' },
+  { video: '/assets/videos/R3hab_GRANDRecap.mp4', image: '/assets/photos/untitled-5.jpg' },
+  { video: '/assets/videos/3.6.25_MystiqueFoodShoot_WagyuToast.mp4', image: '/assets/photos/untitled-10.jpg' },
+  { video: '/assets/videos/ToppsRIpNightRecap_(PaytonPritchard)_v2.mp4', image: '/assets/photos/untitled-11.jpg' },
+  { video: '/assets/videos/EncoreBH_Red8_SashimiPlatter.mp4', image: '/assets/photos/untitled-12.jpg' },
+  { video: '/assets/videos/12.20.24_CatDealers_GRAND(1920x1080).mp4', image: '/assets/photos/untitled-13.jpg' },
+  { video: '/assets/videos/CharmalagneMemoire_1920x1080.mp4', image: '/assets/photos/untitled-16.jpg' },
+  { video: '/assets/videos/HV_POOLSHOOT_HVPRE-ROLLSJULY4TH_1920X1080.mp4', image: '/assets/photos/untitled-21.jpg' },
+  { video: '/assets/videos/11.30.24_CheatcodesRecap.mp4', image: '/assets/photos/untitled-26.jpg' },
+];
 
 const heroStats = [
   { value: 150, suffix: '+', label: 'Projects' },
@@ -170,6 +185,37 @@ const AnimatedStat = ({ value, suffix, label }: { value: number; suffix?: string
 };
 
 const Home = memo(function Home() {
+  // Fetch media from R2
+  const { data: heroData } = useHeroMedia();
+  const { data: galleryData } = useGalleryMedia();
+  const { data: gridData } = useGridMedia();
+  const { data: portfolioData } = usePortfolioMedia();
+
+  // Resolve hero media (R2 or fallback)
+  const heroVideoSrc = heroData?.item?.url || FALLBACK_HERO_VIDEO;
+  const heroPosterSrc = heroData?.items?.find((i) => i.type === 'image')?.url || FALLBACK_HERO_POSTER;
+
+  // Resolve gallery images (R2 or fallback)
+  const galleryImages = galleryData?.items?.length
+    ? galleryData.items.map((item) => item.url)
+    : fallbackGalleryImages;
+
+  // Resolve grid videos (R2 or fallback)
+  const gridVideos = gridData?.items?.length
+    ? gridData.items.map((item) => item.url)
+    : fallbackGridVideos;
+
+  // Build portfolio items with R2 URLs or fallback
+  const portfolioItems = portfolioMetadata.map((meta, idx) => {
+    const r2Video = portfolioData?.items?.[idx];
+    const fallback = fallbackPortfolioMedia[idx];
+    return {
+      ...meta,
+      video: r2Video?.url || fallback?.video || '',
+      image: fallback?.image || '', // Poster images come from fallback for now
+    };
+  });
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-black">
       <ShaderBackground />
@@ -178,8 +224,8 @@ const Home = memo(function Home() {
       {/* Scroll Expansion Hero Section */}
       <ScrollExpandMedia
         mediaType="video"
-        mediaSrc={getVideoUrl('longerdemoreel.mp4')}
-        bgImageSrc={getPhotoUrl('untitled-2.jpg')}
+        mediaSrc={heroVideoSrc}
+        bgImageSrc={heroPosterSrc}
         title=""
         date="Featured Work"
         textBlend={false}
@@ -225,7 +271,7 @@ const Home = memo(function Home() {
               <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
                   <OptimizedVideo
-                    src={getVideoUrl('F1Arcade_NowOpenReel_(1080x1920)_v3.mp4')}
+                    src={gridVideos[0] || fallbackGridVideos[0]}
                     autoPlay
                     loop
                     muted
@@ -244,8 +290,7 @@ const Home = memo(function Home() {
                   viewport={{ once: true }}
                   transition={{ delay: 0.3 }}
                 >
-                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">Hospitality & Events</h3>
-                  {/* <p className="text-sm sm:text-base md:text-lg text-gray-300 mb-4 md:mb-6">Cinematic storytelling that elevates your brand</p> */}
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">{gridMetadata[0].title}</h3>
                   <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
                     <span className="text-lg font-medium">View Project</span>
                     <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
@@ -253,7 +298,7 @@ const Home = memo(function Home() {
                 </motion.div>
               </div>
               <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
-                <span className="text-xs md:text-sm text-gray-400">01</span>
+                <span className="text-xs md:text-sm text-gray-400">{gridMetadata[0].number}</span>
               </div>
             </motion.div>
 
@@ -268,7 +313,7 @@ const Home = memo(function Home() {
               <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
                   <OptimizedVideo
-                    src={getVideoUrl('CentralCee_GrandRecap_1920x1080.mp4')}
+                    src={gridVideos[1] || fallbackGridVideos[1]}
                     autoPlay
                     loop
                     muted
@@ -287,8 +332,7 @@ const Home = memo(function Home() {
                   viewport={{ once: true }}
                   transition={{ delay: 0.3 }}
                 >
-                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">Nightlife & Concerts</h3>
-                  {/* <p className="text-sm sm:text-base md:text-lg text-gray-300 mb-4 md:mb-6">High-impact campaigns that drive results</p> */}
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">{gridMetadata[1].title}</h3>
                   <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
                     <span className="text-lg font-medium">View Project</span>
                     <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
@@ -296,7 +340,7 @@ const Home = memo(function Home() {
                 </motion.div>
               </div>
               <div className="absolute top-4 right-4 md:top-8 md:right-8 z-10">
-                <span className="text-xs md:text-sm text-gray-400">02</span>
+                <span className="text-xs md:text-sm text-gray-400">{gridMetadata[1].number}</span>
               </div>
             </motion.div>
           </div>
@@ -313,7 +357,7 @@ const Home = memo(function Home() {
               <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
                   <OptimizedVideo
-                    src={getVideoUrl('F1Arcade_NowOpenReel_(1080x1920)_v3.mp4')}
+                    src={gridVideos[2] || fallbackGridVideos[2]}
                     autoPlay
                     loop
                     muted
@@ -332,8 +376,7 @@ const Home = memo(function Home() {
                   viewport={{ once: true }}
                   transition={{ delay: 0.3 }}
                 >
-                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">Real Estate & Development</h3>
-                  {/* <p className="text-sm sm:text-base md:text-lg text-gray-300 mb-4 md:mb-6">Cinematic storytelling that elevates your brand</p> */}
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">{gridMetadata[2].title}</h3>
                   <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
                     <span className="text-lg font-medium">View Project</span>
                     <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
@@ -341,7 +384,7 @@ const Home = memo(function Home() {
                 </motion.div>
               </div>
               <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
-                <span className="text-xs md:text-sm text-gray-400">01</span>
+                <span className="text-xs md:text-sm text-gray-400">{gridMetadata[2].number}</span>
               </div>
             </motion.div>
 
@@ -356,7 +399,7 @@ const Home = memo(function Home() {
               <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 <Suspense fallback={<div className="w-full h-full bg-gray-900 animate-pulse" />}>
                   <OptimizedVideo
-                    src={getVideoUrl('CentralCee_GrandRecap_1920x1080.mp4')}
+                    src={gridVideos[3] || fallbackGridVideos[3]}
                     autoPlay
                     loop
                     muted
@@ -375,8 +418,7 @@ const Home = memo(function Home() {
                   viewport={{ once: true }}
                   transition={{ delay: 0.3 }}
                 >
-                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">Branding</h3>
-                  {/* <p className="text-sm sm:text-base md:text-lg text-gray-300 mb-4 md:mb-6">High-impact campaigns that drive results</p> */}
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">{gridMetadata[3].title}</h3>
                   <Link href="/portfolio" className="inline-flex items-center gap-2 text-white hover:text-accent-primary transition-colors">
                     <span className="text-lg font-medium">View Project</span>
                     <ArrowDown className="w-5 h-5 rotate-[-45deg]" />
@@ -384,7 +426,7 @@ const Home = memo(function Home() {
                 </motion.div>
               </div>
               <div className="absolute top-4 right-4 md:top-8 md:right-8 z-10">
-                <span className="text-xs md:text-sm text-gray-400">02</span>
+                <span className="text-xs md:text-sm text-gray-400">{gridMetadata[3].number}</span>
               </div>
             </motion.div>
           </div>
@@ -407,9 +449,6 @@ const Home = memo(function Home() {
               <br />
               <span className="text-accent-primary">Portfolio</span>
             </h2>
-            {/* <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto px-4">
-              Explore our collection of creative projects
-            </p> */}
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -471,12 +510,9 @@ const Home = memo(function Home() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl font-bold mb-6 md:mb-8 text-white leading-tight px-4">
-              Connect 
+              Connect
               <span className="text-accent-primary"> with us</span>
             </h2>
-            {/* <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto px-4">
-              Let's discuss how we can bring your vision to life with creative storytelling
-            </p> */}
           </motion.div>
 
           <LeadCapture />
@@ -495,16 +531,16 @@ const Home = memo(function Home() {
             transition={{ duration: 0.8 }}
             className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-12 md:gap-16 items-center"
           >
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
               className="space-y-6"
-            >
+              >
               <div className="inline-flex items-center gap-3 rounded-full bg-white/5 px-5 py-2 text-sm font-medium text-white/80 border border-white/10 shadow-[0_0_30px_rgba(255,255,255,0.12)]">
                 Our Story
-              </div>
+                </div>
               <div>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight tracking-tight">
                   Crafting Visual
@@ -526,7 +562,7 @@ const Home = memo(function Home() {
                   something extraordinary together.
                 </p>
               </div>
-            </motion.div>
+              </motion.div>
 
             <motion.div
               initial={{ opacity: 0, x: 50 }}
@@ -555,9 +591,9 @@ const Home = memo(function Home() {
                         {stat.label}
                       </span>
                     </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
               <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-accent-primary/20 blur-3xl" />
             </motion.div>
           </motion.div>

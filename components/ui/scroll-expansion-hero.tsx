@@ -134,59 +134,59 @@ const ScrollExpandMedia = ({
     if (!active) return;
 
     if (expanded && e.deltaY < 0 && window.scrollY <= 5) {
-      setMediaFullyExpanded(false);
-      e.preventDefault();
+        setMediaFullyExpanded(false);
+        e.preventDefault();
     } else if (!expanded) {
-      e.preventDefault();
-      const scrollDelta = e.deltaY * 0.0009;
+        e.preventDefault();
+        const scrollDelta = e.deltaY * 0.0009;
       const newProgress = Math.min(Math.max(progress + scrollDelta, 0), 1);
-      setScrollProgress(newProgress);
+        setScrollProgress(newProgress);
 
-      if (newProgress >= 1) {
-        setMediaFullyExpanded(true);
-        setShowContent(true);
-      } else if (newProgress < 0.75) {
-        setShowContent(false);
+        if (newProgress >= 1) {
+          setMediaFullyExpanded(true);
+          setShowContent(true);
+        } else if (newProgress < 0.75) {
+          setShowContent(false);
+        }
       }
-    }
   }, []);
 
   const handleTouchStart = useCallback((e: globalThis.TouchEvent) => {
     if (!stateRef.current.isActive) return;
-    setTouchStartY(e.touches[0].clientY);
+      setTouchStartY(e.touches[0].clientY);
   }, []);
 
   const handleTouchMove = useCallback((e: globalThis.TouchEvent) => {
     const { isActive: active, mediaFullyExpanded: expanded, scrollProgress: progress, touchStartY: touchStart } = stateRef.current;
-    
+
     if (!active || !touchStart) return;
 
-    const touchY = e.touches[0].clientY;
+      const touchY = e.touches[0].clientY;
     const deltaY = touchStart - touchY;
 
     if (expanded && deltaY < -20 && window.scrollY <= 5) {
-      setMediaFullyExpanded(false);
-      e.preventDefault();
+        setMediaFullyExpanded(false);
+        e.preventDefault();
     } else if (!expanded) {
-      e.preventDefault();
+        e.preventDefault();
       const scrollFactor = deltaY < 0 ? 0.008 : 0.005;
-      const scrollDelta = deltaY * scrollFactor;
+        const scrollDelta = deltaY * scrollFactor;
       const newProgress = Math.min(Math.max(progress + scrollDelta, 0), 1);
-      setScrollProgress(newProgress);
+        setScrollProgress(newProgress);
 
-      if (newProgress >= 1) {
-        setMediaFullyExpanded(true);
-        setShowContent(true);
-      } else if (newProgress < 0.75) {
-        setShowContent(false);
+        if (newProgress >= 1) {
+          setMediaFullyExpanded(true);
+          setShowContent(true);
+        } else if (newProgress < 0.75) {
+          setShowContent(false);
+        }
+
+        setTouchStartY(touchY);
       }
-
-      setTouchStartY(touchY);
-    }
   }, []);
 
   const handleTouchEnd = useCallback(() => {
-    setTouchStartY(0);
+      setTouchStartY(0);
   }, []);
 
   // Attach event listeners once and never remove them - they check isActive internally
@@ -254,16 +254,16 @@ const ScrollExpandMedia = ({
             <div className='flex flex-col items-center justify-center w-full h-[100dvh] relative'>
               {/* Centered media + scroll indicator stack */}
               <div className='relative flex flex-col items-center'>
-                <div
+              <div
                   className='transition-none rounded-2xl overflow-hidden'
-                  style={{
-                    width: `${mediaWidth}px`,
-                    height: `${mediaHeight}px`,
-                    maxWidth: '95vw',
-                    maxHeight: '85vh',
-                    boxShadow: '0px 0px 50px rgba(0, 0, 0, 0.5)',
-                  }}
-                >
+                style={{
+                  width: `${mediaWidth}px`,
+                  height: `${mediaHeight}px`,
+                  maxWidth: '95vw',
+                  maxHeight: '85vh',
+                  boxShadow: '0px 0px 50px rgba(0, 0, 0, 0.5)',
+                }}
+              >
                 {mediaType === 'video' ? (
                   mediaSrc.includes('youtube.com') ? (
                     <div className='relative w-full h-full pointer-events-none'>
@@ -352,7 +352,7 @@ const ScrollExpandMedia = ({
                     </p>
                   )}
                 </div>
-              </div>
+                </div>
               </div>
 
               {/* Scroll Indicator - directly under media */}
