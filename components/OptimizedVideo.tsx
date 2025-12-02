@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, memo } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 
 interface OptimizedVideoProps {
   src: string;
@@ -29,13 +29,12 @@ const OptimizedVideo = memo(({
 }: OptimizedVideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(!lazy || priority);
-  const [isInView, setIsInView] = useState(false);
-  const playAttemptedRef = useRef(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  // Intersection Observer for lazy loading
+  // Intersection Observer for lazy loading - start loading when near viewport
   useEffect(() => {
     if (!lazy || priority || shouldLoad) return;
 
@@ -43,16 +42,14 @@ const OptimizedVideo = memo(({
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            setIsInView(true);
             setShouldLoad(true);
             observer.disconnect();
           }
         });
       },
       {
-        // Preload a bit before it becomes visible for smoothness
-        rootMargin: '200px 0px 200px 0px',
-        threshold: 0.01,
+        rootMargin: '400px 0px 400px 0px', // Start loading earlier
+        threshold: 0,
       }
     );
 
@@ -60,102 +57,58 @@ const OptimizedVideo = memo(({
       observer.observe(containerRef.current);
     }
 
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [lazy, priority, shouldLoad]);
 
-  // Video loading and playback logic
+  // Visibility observer - play/pause based on visibility
   useEffect(() => {
     if (!shouldLoad) return;
-
-    const video = videoRef.current;
-    if (!video) return;
-
-    // Set up video properties
-    video.muted = muted;
-    video.playsInline = playsInline;
-    video.preload = priority ? 'auto' : 'metadata';
-
-    const handleCanPlay = () => {
-      setIsLoaded(true);
-      // Only attempt autoplay if the video is in viewport
-      if (autoPlay && isInView && !playAttemptedRef.current) {
-        playAttemptedRef.current = true;
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {
-            // Autoplay prevented - will retry on next intersection
-            playAttemptedRef.current = false;
-          });
-        }
-      }
-    };
-
-    const handleLoadedData = () => {
-      setIsLoaded(true);
-    };
-
-    const handleError = () => {
-      setHasError(true);
-      setIsLoaded(true);
-    };
-
-    // Add event listeners
-    video.addEventListener('canplaythrough', handleCanPlay);
-    video.addEventListener('loadeddata', handleLoadedData);
-    video.addEventListener('error', handleError);
-
-    return () => {
-      video.removeEventListener('canplaythrough', handleCanPlay);
-      video.removeEventListener('loadeddata', handleLoadedData);
-      video.removeEventListener('error', handleError);
-    };
-  }, [shouldLoad, autoPlay, muted, playsInline, priority, isInView]);
-
-  // Separate observer to control playback (play when sufficiently visible, pause when not)
-  useEffect(() => {
-    if (!shouldLoad) return;
+    
     const el = containerRef.current;
-    const video = videoRef.current;
-    if (!el || !video) return;
+    if (!el) return;
 
-    const playbackObserver = new IntersectionObserver(
+    const visibilityObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          const visible = entry.isIntersecting && entry.intersectionRatio >= 0.6;
-          setIsInView(visible);
-          if (visible) {
-            if (autoPlay) {
-              const playPromise = video.play();
-              if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                  // ignore
-                });
-              }
-            }
-          } else {
-            // Pause when out of view to save resources
-            video.pause();
-          }
+          const visible = entry.isIntersecting && entry.intersectionRatio >= 0.3;
+          setIsVisible(visible);
         });
       },
       {
-        root: null,
-        threshold: [0, 0.25, 0.5, 0.6, 0.75, 1],
+        threshold: [0, 0.3, 0.5, 1],
       }
     );
 
-    playbackObserver.observe(el);
-    return () => playbackObserver.disconnect();
-  }, [shouldLoad, autoPlay]);
+    visibilityObserver.observe(el);
+    return () => visibilityObserver.disconnect();
+  }, [shouldLoad]);
 
-  // Pause all videos when tab loses visibility
+  // Play/pause based on visibility
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !shouldLoad) return;
+
+    if (isVisible && autoPlay) {
+      // Try to play
+      video.play().then(() => {
+        setIsPlaying(true);
+      }).catch(() => {
+        // Autoplay blocked, that's okay
+        setIsPlaying(false);
+      });
+    } else if (!isVisible && isPlaying) {
+      video.pause();
+      setIsPlaying(false);
+    }
+  }, [isVisible, autoPlay, shouldLoad, isPlaying]);
+
+  // Pause when tab is hidden
   useEffect(() => {
     const onVisibility = () => {
-      if (document.hidden) {
-        const video = videoRef.current;
-        if (video) video.pause();
+      const video = videoRef.current;
+      if (document.hidden && video) {
+        video.pause();
+        setIsPlaying(false);
       }
     };
     document.addEventListener('visibilitychange', onVisibility);
@@ -170,37 +123,33 @@ const OptimizedVideo = memo(({
 
   return (
     <div ref={containerRef} className={`relative overflow-hidden ${className}`}>
-      {!isLoaded && (
-        <div className="absolute inset-0 bg-gray-900 animate-pulse z-10" />
-      )}
       {shouldLoad && (
         <video
           ref={videoRef}
           src={src}
-          poster={poster}
           autoPlay={autoPlay}
           loop={loop}
           muted={muted}
           playsInline={playsInline}
           controls={controls}
-          preload={priority ? 'auto' : 'metadata'}
+          preload="auto"
           // @ts-ignore - WebKit-specific attributes for mobile autoplay
           webkit-playsinline="true"
           // @ts-ignore
           x-webkit-airplay="allow"
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
-            isLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
-          onLoadedData={() => setIsLoaded(true)}
+          className="w-full h-full object-cover"
           onError={() => setHasError(true)}
           style={{
             objectFit: 'cover',
             objectPosition: 'center',
-            willChange: 'opacity',
           }}
         >
           Your browser does not support the video tag.
         </video>
+      )}
+      {/* Show loading state only when not loaded yet */}
+      {!shouldLoad && (
+        <div className="absolute inset-0 bg-gray-900" />
       )}
     </div>
   );
