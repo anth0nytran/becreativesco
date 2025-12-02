@@ -53,7 +53,18 @@ export interface R2Object {
 
 let r2Client: S3Client | null = null;
 
-function getR2Client(): S3Client {
+/**
+ * Check if R2 is configured (all required env vars are present)
+ */
+export function isR2Configured(): boolean {
+  return Boolean(
+    process.env.R2_ACCOUNT_ID &&
+    process.env.R2_ACCESS_KEY_ID &&
+    process.env.R2_SECRET_ACCESS_KEY
+  );
+}
+
+function getR2Client(): S3Client | null {
   if (r2Client) return r2Client;
 
   const accountId = process.env.R2_ACCOUNT_ID;
@@ -61,9 +72,10 @@ function getR2Client(): S3Client {
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
 
   if (!accountId || !accessKeyId || !secretAccessKey) {
-    throw new Error(
-      'Missing R2 environment variables. Ensure R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY are set.'
+    console.warn(
+      'R2 not configured. Missing env vars: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, or R2_SECRET_ACCESS_KEY. Falling back to local assets.'
     );
+    return null;
   }
 
   const endpoint = process.env.R2_ENDPOINT || `https://${accountId}.r2.cloudflarestorage.com`;
@@ -101,6 +113,12 @@ export function getPublicUrl(key: string): string {
 
 export async function listObjectsByPrefix(prefix: string): Promise<R2Object[]> {
   const client = getR2Client();
+  
+  // If R2 is not configured, return empty array (fallback to local assets)
+  if (!client) {
+    return [];
+  }
+
   const bucketName = process.env.R2_BUCKET_NAME || 'assets';
 
   const command = new ListObjectsV2Command({
