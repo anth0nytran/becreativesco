@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-// Initialize Resend with API key from environment
-const resend = new Resend(process.env.RESEND_API_KEY);
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 // Brian's email address
 const BRIAN_EMAIL = 'brian@becreativesco.com';
-const FROM_EMAIL = process.env.FROM_EMAIL || 'leads@becreativesco.com';
+const FROM_EMAIL =
+  process.env.FROM_EMAIL ||
+  (process.env.NODE_ENV === 'development'
+    ? 'onboarding@resend.dev'
+    : 'leads@becreativesco.com');
 
 interface LeadFormData {
   name: string;
@@ -19,6 +23,17 @@ interface LeadFormData {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!resend) {
+      console.error('Missing RESEND_API_KEY environment variable');
+      return NextResponse.json(
+        {
+          error:
+            'Email service is not configured. Please contact us directly while we resolve this.',
+        },
+        { status: 500 }
+      );
+    }
+
     const body: LeadFormData = await request.json();
     const { name, email, phone, social, industry, message } = body;
 
@@ -148,8 +163,13 @@ Reply directly to this email to respond to ${name}.
 
     if (error) {
       console.error('Resend error:', error);
+      const errorMessage =
+        typeof error === 'object' && error !== null && 'message' in error
+          ? String(error.message)
+          : 'Failed to send email. Please try again.';
+
       return NextResponse.json(
-        { error: 'Failed to send email. Please try again.' },
+        { error: errorMessage },
         { status: 500 }
       );
     }
