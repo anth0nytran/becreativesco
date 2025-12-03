@@ -9,6 +9,17 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'BE CREATIVES CO. | Creative Portfolio',
   description: 'Merging Professional Expertise with a Modern Edge to Shape Stories That Elevate Your Brand',
+  icons: {
+    icon: [
+      {
+        url: '/assets/photos/belogo.jpg',
+        sizes: 'any',
+        type: 'image/jpeg',
+      },
+    ],
+    shortcut: '/assets/photos/belogo.jpg',
+    apple: '/assets/photos/belogo.jpg',
+  },
 }
 
 export const viewport: Viewport = {

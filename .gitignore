@@ -38,7 +38,8 @@ next-env.d.ts
 # large media assets (kept local, not in git)
 /assets/
 public/assets/videos/
-public/assets/photos/
+public/assets/photos/*
+!public/assets/photos/belogo.jpg
 public/assets/Preview/
 public/assets/Read\ Me.txt
 
