@@ -94,7 +94,7 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   },
   {
     id: 8,
-    title: 'Happy Vally',
+    title: 'Happy Valley',
     category: 'Branding',
     description: '',
     icon: <Play className="w-5 h-5" />,

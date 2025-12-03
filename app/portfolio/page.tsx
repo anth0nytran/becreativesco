@@ -125,7 +125,7 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   },
   {
     id: 13,
-    title: 'Boston Access Living',
+    title: 'Access Boston Living',
     category: 'Real Estate & Development',
     description: '',
     icon: <Camera className="w-5 h-5" />,
@@ -149,7 +149,7 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   },
   {
     id: 16,
-    title: 'Happy Vally',
+    title: 'Happy Valley',
     category: 'Branding',
     description: '',
     icon: <Camera className="w-5 h-5" />,
