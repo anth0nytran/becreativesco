@@ -102,7 +102,7 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   },
   {
     id: 9,
-    title: 'Big Night Life - Cheatcodes',
+    title: 'Big Night Live - Cheatcodes',
     category: 'Nightlife & Concerts',
     description: '',
     icon: <Play className="w-5 h-5" />,

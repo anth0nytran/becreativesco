@@ -69,7 +69,7 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   },
   {
     id: 6,
-    title: 'Reebook',
+    title: 'Reebok',
     category: 'Branding',
     description: '',
     icon: <Film className="w-5 h-5" />,
@@ -133,7 +133,7 @@ const portfolioMetadata: PortfolioMetadataItem[] = [
   },
   {
     id: 14,
-    title: 'Grand Boston - Night Pulse',
+    title: 'Grand Boston - R3HAB',
     category: 'Nightlife & Concerts',
     description: '',
     icon: <Camera className="w-5 h-5" />,
