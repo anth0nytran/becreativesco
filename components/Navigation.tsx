@@ -112,14 +112,14 @@ const Navigation = () => {
               className="flex items-center space-x-2 flex-shrink-0"
             >
               <Link href="/" className="flex items-center space-x-2">
-                <div className="relative">
+                {/* <div className="relative">
                   <div className="absolute inset-0 bg-accent-primary/10 blur-xl rounded-full" />
                   <div className="relative w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-white/20">
                     <span className="text-black font-bold text-lg">
                       BE
                     </span>
                   </div>
-                </div>
+                </div> */}
                 <span className="heading-font text-sm sm:text-base font-bold text-white tracking-[0.2em]">
                   BE CREATIVES CO.
                 </span>
